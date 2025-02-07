@@ -1496,48 +1496,58 @@ loadGoal(); // Load the goal for the current year
 updateDashboard(); // Ensure the dashboard is updated
 displayBooks(); // Show books for the current year 
 
-// Mobile Bottom Bar Code (within DOMContentLoaded)
-document.addEventListener('DOMContentLoaded', () => {
-    // Get the FAB and bottom bar elements
-    const fab = document.getElementById('fab');
-    const bottomBar = document.getElementById('bottomBar');
-  
-    // Toggle the bottom bar when the FAB is clicked
-    fab.addEventListener('click', () => {
-      console.log("FAB clicked"); // For debugging
-      bottomBar.classList.toggle('hidden');
-    });
-  
-    // Attach event listeners to the bottom bar buttons
-  
-    // Sort Books button (for the currently visible section)
-    document.getElementById('bottomSort').addEventListener('click', () => {
-      // You can call your sorting function here.
-      // For example, if finished books are active, call the finished sort logic.
-      console.log("Bottom Sort button clicked");
-      // Example: sortFinishedBooks(); (Implement accordingly)
-    });
-  
-    // Toggle View button
-    document.getElementById('bottomToggle').addEventListener('click', () => {
-      // Call your toggle view function here.
-      console.log("Bottom Toggle button clicked");
-      // Example: toggleViewForCurrentSection(); (Implement accordingly)
-    });
-  
-    // Switch Section button
-    document.getElementById('bottomSection').addEventListener('click', () => {
-      // You could switch between sections (for example, cycle through TBR, Currently Reading, Finished).
-      console.log("Bottom Section button clicked");
-      // Example: cycleSections(); (Implement as needed)
-    });
-  
-    // Add Book button
-    document.getElementById('bottomAdd').addEventListener('click', () => {
-      // Open your Add Book modal
-      document.getElementById('openAddBookModal').click();
-      console.log("Bottom Add button clicked");
-    });
-  });  
 
+
+// --- Mobile Bottom Bar Code ---
+// (Assuming your scripts.js is already inside a DOMContentLoaded callback)
+
+const fab = document.getElementById('fab');
+const bottomBar = document.getElementById('bottomBar');
+
+// Toggle the bottom bar when the FAB is clicked
+fab.addEventListener('click', () => {
+  console.log("FAB clicked");
+  bottomBar.classList.toggle('hidden');
 });
+
+// Now attach event listeners to the bottom bar buttons
+
+// Sort Books button for the current section
+document.getElementById('bottomSort').addEventListener('click', () => {
+  console.log("Bottom Sort clicked");
+  // Call your sort function for the currently visible section.
+  // For example:
+  // sortBooksForCurrentSection();
+});
+
+// Toggle View button for the current section
+document.getElementById('bottomToggle').addEventListener('click', () => {
+  console.log("Bottom Toggle clicked");
+  // Call your toggle view function for the currently visible section.
+  // For example:
+  // toggleViewForCurrentSection();
+});
+
+// Switch Section button (for example, cycle through sections)
+document.getElementById('bottomSection').addEventListener('click', () => {
+  console.log("Bottom Section clicked");
+  // Implement section switching logic here.
+  // For example, cycle through 'To Be Read', 'Currently Reading', 'Finished Books'.
+});
+
+// Add Book button: toggle the Add Book modal
+document.getElementById('bottomAdd').addEventListener('click', () => {
+  console.log("Bottom Add clicked");
+  const addBookModal = document.getElementById('addBookModal');
+  // Toggle the modal: if it is active, close it; if it is closed, open it.
+  if (addBookModal.classList.contains('active')) {
+    // Close the modal
+    closeModal(addBookModal);
+  } else {
+    // Open the modal
+    addBookModal.style.display = 'flex';
+    addBookModal.classList.add('active');
+  }
+});
+
+});  

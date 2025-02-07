@@ -984,7 +984,7 @@ margin: 2px 0;
   }
   
   /* FAB styling (floating action button) */
-.fab {
+  .fab {
     position: fixed;
     bottom: 20px;
     right: 20px;
@@ -1001,19 +1001,19 @@ margin: 2px 0;
   }
   
   /* Bottom Bar Container styling */
-  .bottom-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: rgba(0,0,0,0.9);
-    padding: 10px;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    transition: transform 0.3s ease-out;
-    z-index: 2900;
-  }
+    .bottom-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: rgba(0,0,0,0.9);
+        padding: 10px;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        transition: transform 0.3s ease-out;
+        z-index: 3100;
+    }
   
   /* Initially hide the bottom bar by moving it offscreen */
   .bottom-bar.hidden {
