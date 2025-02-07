@@ -1504,6 +1504,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
     // Toggle the bottom bar when the FAB is clicked
     fab.addEventListener('click', () => {
+      console.log("FAB clicked"); // For debugging
       bottomBar.classList.toggle('hidden');
     });
   
