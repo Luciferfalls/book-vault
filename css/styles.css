@@ -383,7 +383,7 @@ button:hover {
 
 /* ===== Utility Classes ===== */
 .hidden {
-    display: none !important;
+    display: none;
 }
 
 .button-container {
