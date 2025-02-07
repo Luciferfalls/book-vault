@@ -956,3 +956,92 @@ margin: 2px 0;
     width: 100%;
     margin-bottom: 5px;
 }
+
+#globalControlBar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    z-index: 2000;
+  }
+  
+  .control-btn {
+    padding: 10px 15px;
+    font-size: 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .control-btn:hover {
+    background-color: #4b8ed7;
+  }
+  
+  /* FAB styling (floating action button) */
+.fab {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    font-size: 28px;
+    z-index: 3000;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  }
+  
+  /* Bottom Bar Container styling */
+  .bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0,0,0,0.9);
+    padding: 10px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    transition: transform 0.3s ease-out;
+    z-index: 2900;
+  }
+  
+  /* Initially hide the bottom bar by moving it offscreen */
+  .bottom-bar.hidden {
+    transform: translateY(100%);
+  }
+  
+  /* Style for the buttons inside the bottom bar */
+  .bottom-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    flex: 1;
+    margin: 0 5px;
+    transition: background 0.3s ease;
+  }
+  .bottom-btn:hover {
+    background-color: #4b8ed7;
+  }
+  
+  /* OPTIONAL: Use a media query so that this bottom bar only appears on mobile */
+  @media (min-width: 768px) {
+    /* Hide the FAB and bottom bar on larger screens */
+    .fab, .bottom-bar {
+      display: none;
+    }
+  }
+  

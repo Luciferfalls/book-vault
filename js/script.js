@@ -219,6 +219,15 @@ function updateDashboard() {
     document.getElementById('goalCount').textContent = savedGoal ? savedGoal : yearlyGoal;
 }
 
+goalDisplay.addEventListener('click', () => {
+    let newGoal = prompt("Enter your new yearly goal:", goalDisplay.textContent);
+    if (newGoal !== null && !isNaN(newGoal)) {
+        yearlyGoal = parseInt(newGoal, 10);
+        localStorage.setItem(`goal-${currentYear}`, yearlyGoal);
+        updateDashboard();
+    }
+});
+
 function formatDate(dateString) {
     const date = new Date(`${dateString}T00:00:00`);
     const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -239,17 +248,22 @@ function formatTime(timeString) {
 
 function getAvailableYears() {
     const books = JSON.parse(localStorage.getItem('books')) || [];
-    const years = books
+    let years = books
         .map(book => {
             if (book.endDate) return new Date(book.endDate).getFullYear();
             if (book.startDate) return new Date(book.startDate).getFullYear();
             return null;
         })
-        .filter(year => year) // Remove nulls
-        .filter((year, index, self) => self.indexOf(year) === index) // Remove duplicates
-        .sort((a, b) => b - a); // Sort in descending order
-
-    return years.length ? years : [new Date().getFullYear()]; // Default to the current year if empty
+        .filter(year => year !== null)
+        .filter((year, index, self) => self.indexOf(year) === index)
+        .sort((a, b) => b - a);
+    
+    // Always include the current year
+    if (!years.includes(currentYear)) {
+        years.push(currentYear);
+        years.sort((a, b) => b - a);
+    }
+    return years;
 }      
 
 function filterBooksByYear(selectedYear) {
@@ -683,6 +697,8 @@ function displayBooks() {
                     <p>${book.pages} pages</p>
                     ${book.tbr ? '' : `<p><strong>Start Date:</strong> ${formatDate(book.startDate)}</p>`}
                     ${book.finished ? `<p><strong>End Date:</strong> ${formatDate(book.endDate)}</p>` : ''}
+                    ${book.finished && book.pagesPerHour ? `<p><strong>Pages per Hour:</strong> ${book.pagesPerHour}</p>` : ''}
+                    ${book.finished && book.timeToRead ? `<p><strong>Total Reading Time:</strong> ${book.timeToRead}</p>` : ''}
                 </div>
             </div>
         `;
@@ -1054,6 +1070,16 @@ addBookForm.addEventListener('submit', (e) => {
 
     const startDate = document.getElementById('startDate').value || null;
 
+    // Only for finished books, read additional fields
+    let finishedEndDate = null;
+    let pagesPerHour = null;
+    let readingTime = null;
+    if (selectedBookType === 'finished') {
+        finishedEndDate = document.getElementById('endDate').value || null;
+        pagesPerHour = parseFloat(document.getElementById('pagesPerHour').value) || null;
+        readingTime = document.getElementById('readingTime').value.trim() || null;
+    }
+
     const newBook = {
         id: Date.now().toString(),
         title,
@@ -1064,10 +1090,13 @@ addBookForm.addEventListener('submit', (e) => {
         startDate,
         tbr: selectedBookType === 'tbr',
         finished: selectedBookType === 'finished',
+        endDate: finishedEndDate,         // NEW: Set finished book's end date
+        pagesPerHour: pagesPerHour,         // NEW: Set finished book's pages per hour
+        timeToRead: readingTime,            // NEW: Set finished book's total reading time
         backgroundMode: 'cover', // Default
         backgroundPosition: 'center', // Default background position
-        currentPage: selectedBookType === 'reading' ? 0 : undefined  // Initialize for currently reading
-    };  
+        currentPage: selectedBookType === 'reading' ? 0 : undefined  // Only for "Currently Reading"
+    };
 
     allBooks.push(newBook);
     updateAppState();
@@ -1466,5 +1495,48 @@ populateYearDropdown(); // Populate the dropdown with available years
 loadGoal(); // Load the goal for the current year
 updateDashboard(); // Ensure the dashboard is updated
 displayBooks(); // Show books for the current year 
+
+// Mobile Bottom Bar Code (within DOMContentLoaded)
+document.addEventListener('DOMContentLoaded', () => {
+    // Get the FAB and bottom bar elements
+    const fab = document.getElementById('fab');
+    const bottomBar = document.getElementById('bottomBar');
+  
+    // Toggle the bottom bar when the FAB is clicked
+    fab.addEventListener('click', () => {
+      bottomBar.classList.toggle('hidden');
+    });
+  
+    // Attach event listeners to the bottom bar buttons
+  
+    // Sort Books button (for the currently visible section)
+    document.getElementById('bottomSort').addEventListener('click', () => {
+      // You can call your sorting function here.
+      // For example, if finished books are active, call the finished sort logic.
+      console.log("Bottom Sort button clicked");
+      // Example: sortFinishedBooks(); (Implement accordingly)
+    });
+  
+    // Toggle View button
+    document.getElementById('bottomToggle').addEventListener('click', () => {
+      // Call your toggle view function here.
+      console.log("Bottom Toggle button clicked");
+      // Example: toggleViewForCurrentSection(); (Implement accordingly)
+    });
+  
+    // Switch Section button
+    document.getElementById('bottomSection').addEventListener('click', () => {
+      // You could switch between sections (for example, cycle through TBR, Currently Reading, Finished).
+      console.log("Bottom Section button clicked");
+      // Example: cycleSections(); (Implement as needed)
+    });
+  
+    // Add Book button
+    document.getElementById('bottomAdd').addEventListener('click', () => {
+      // Open your Add Book modal
+      document.getElementById('openAddBookModal').click();
+      console.log("Bottom Add button clicked");
+    });
+  });  
 
 });
