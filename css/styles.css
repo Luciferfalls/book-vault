@@ -983,8 +983,8 @@ margin: 2px 0;
     background-color: #4b8ed7;
   }
   
-  /* FAB styling (floating action button) */
-  .fab {
+ /* --- FAB Styles --- */
+.fab {
     position: fixed;
     bottom: 20px;
     right: 20px;
@@ -1000,48 +1000,78 @@ margin: 2px 0;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
   }
   
-  /* Bottom Bar Container styling */
-    .bottom-bar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background-color: rgba(0,0,0,0.9);
-        padding: 10px;
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-        transition: transform 0.3s ease-out;
-        z-index: 3100;
-    }
-  
-  /* Initially hide the bottom bar by moving it offscreen */
+  /* --- Bottom Bar Styles --- */
+  .bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0,0,0,0.9);
+    padding: 10px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 3100; /* Make sure it appears above the FAB */
+  }
   .bottom-bar.hidden {
-    transform: translateY(100%);
+    display: none;
   }
   
-  /* Style for the buttons inside the bottom bar */
+  /* --- Bottom Bar Button Styles --- */
   .bottom-btn {
+    padding: 10px 15px;
+    font-size: 16px;
     background-color: #007bff;
     color: white;
     border: none;
-    padding: 10px 15px;
     border-radius: 5px;
     cursor: pointer;
-    font-size: 16px;
-    flex: 1;
-    margin: 0 5px;
     transition: background 0.3s ease;
   }
   .bottom-btn:hover {
     background-color: #4b8ed7;
   }
   
-  /* OPTIONAL: Use a media query so that this bottom bar only appears on mobile */
-  @media (min-width: 768px) {
-    /* Hide the FAB and bottom bar on larger screens */
-    .fab, .bottom-bar {
+  /* --- Section Dropdown Styles --- */
+  .section-dropdown {
+    position: absolute;
+    bottom: 60px; /* Drops up above the bottom bar */
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    padding: 10px;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    z-index: 3200;
+  }
+  .section-dropdown.hidden {
+    display: none;
+  }
+  .section-option {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s ease;
+  }
+  .section-option:hover {
+    background-color: #4b8ed7;
+  }  
+  
+  /* --- Mobile Only / Desktop Only --- */
+@media (max-width: 767px) {
+    .desktop-only {
       display: none;
     }
   }
   
+@media (min-width: 768px) {
+    .mobile-only {
+      display: none;
+    }
+  }

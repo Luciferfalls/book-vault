@@ -1498,55 +1498,140 @@ displayBooks(); // Show books for the current year
 
 
 
-// --- Mobile Bottom Bar Code ---
-// (Assuming your scripts.js is already inside a DOMContentLoaded callback)
+// --- Mobile Bottom Bar Functionality ---
 
+// Get the mobile control elements
 const fab = document.getElementById('fab');
 const bottomBar = document.getElementById('bottomBar');
+const bottomClose = document.getElementById('bottomClose');
+const bottomSort = document.getElementById('bottomSort');
+const bottomToggle = document.getElementById('bottomToggle');
+const bottomSection = document.getElementById('bottomSection');
+const bottomAdd = document.getElementById('bottomAdd');
+const sectionDropdown = document.getElementById('sectionDropdown');
 
-// Toggle the bottom bar when the FAB is clicked
+// --- FAB: Toggle the bottom bar ---
 fab.addEventListener('click', () => {
   console.log("FAB clicked");
   bottomBar.classList.toggle('hidden');
 });
 
-// Now attach event listeners to the bottom bar buttons
-
-// Sort Books button for the current section
-document.getElementById('bottomSort').addEventListener('click', () => {
-  console.log("Bottom Sort clicked");
-  // Call your sort function for the currently visible section.
-  // For example:
-  // sortBooksForCurrentSection();
+// --- Dedicated Close Button in Bottom Bar ---
+bottomClose.addEventListener('click', () => {
+  console.log("Bottom Close clicked");
+  bottomBar.classList.add('hidden');
 });
 
-// Toggle View button for the current section
-document.getElementById('bottomToggle').addEventListener('click', () => {
+// --- Sort Books Button ---
+// Only applicable when Finished Books section is active.
+function isFinishedSectionActive() {
+  return document.getElementById('finishedBooksSection').classList.contains('active');
+}
+function updateSortButtonVisibility() {
+  if (isFinishedSectionActive()) {
+    bottomSort.style.display = 'inline-block';
+  } else {
+    bottomSort.style.display = 'none';
+  }
+}
+updateSortButtonVisibility();
+
+bottomSort.addEventListener('click', () => {
+  if (!isFinishedSectionActive()) {
+    console.log("Sort Books pressed outside Finished Books section. Ignored.");
+    return;
+  }
+  console.log("Bottom Sort clicked in Finished Books section");
+  // Toggle finishedSortOrder (assume finishedSortOrder is a global variable)
+  finishedSortOrder = (finishedSortOrder === 'desc') ? 'asc' : 'desc';
+  localStorage.setItem('finishedSortOrder', finishedSortOrder);
+  // Call your sort function for finished books:
+  sortFinishedBooks();
+});
+function sortFinishedBooks() {
+  // Example sorting function for finished books:
+  let finishedBooks = allBooks.filter(book => book.finished);
+  if (finishedSortOrder === 'desc') {
+    finishedBooks.sort((a, b) => new Date(b.endDate) - new Date(a.endDate));
+  } else {
+    finishedBooks.sort((a, b) => new Date(a.endDate) - new Date(b.endDate));
+  }
+  let nonFinishedBooks = allBooks.filter(book => !book.finished);
+  // For demonstration, finished books come first if 'desc'
+  allBooks = (finishedSortOrder === 'desc') 
+             ? finishedBooks.concat(nonFinishedBooks)
+             : nonFinishedBooks.concat(finishedBooks);
+  updateAppState();
+  console.log("Finished books sorted in", finishedSortOrder, "order.");
+}
+
+// --- Toggle View Button ---
+// Toggle between grid and list view for the active section.
+let currentView = "grid"; // Default view
+bottomToggle.addEventListener('click', () => {
   console.log("Bottom Toggle clicked");
-  // Call your toggle view function for the currently visible section.
-  // For example:
-  // toggleViewForCurrentSection();
+  // Find the active section (assuming IDs: toBeReadSection, currentlyReadingSection, finishedBooksSection)
+  const sections = ['toBeReadSection', 'currentlyReadingSection', 'finishedBooksSection'];
+  let activeSection = null;
+  sections.forEach(id => {
+    const sec = document.getElementById(id);
+    if (sec.classList.contains('active')) {
+      activeSection = sec;
+    }
+  });
+  if (activeSection) {
+    activeSection.classList.toggle('grid-view');
+    // Update the toggle icon
+    if (activeSection.classList.contains('grid-view')) {
+      currentView = "grid";
+      bottomToggle.innerHTML = "🔲";  // grid icon
+      console.log("Switched to Grid view");
+    } else {
+      currentView = "list";
+      bottomToggle.innerHTML = "📃";  // list icon
+      console.log("Switched to List view");
+    }
+  }
 });
 
-// Switch Section button (for example, cycle through sections)
-document.getElementById('bottomSection').addEventListener('click', () => {
+// --- Switch Section Button ---
+// Toggle the section dropdown.
+bottomSection.addEventListener('click', () => {
   console.log("Bottom Section clicked");
-  // Implement section switching logic here.
-  // For example, cycle through 'To Be Read', 'Currently Reading', 'Finished Books'.
+  sectionDropdown.classList.toggle('hidden');
 });
 
-// Add Book button: toggle the Add Book modal
-document.getElementById('bottomAdd').addEventListener('click', () => {
+// Attach event listeners for each section option in the dropdown.
+document.querySelectorAll('.section-dropdown .section-option').forEach(option => {
+  option.addEventListener('click', () => {
+    const targetSection = option.getAttribute('data-section');
+    console.log("Switching to section:", targetSection);
+    // Remove 'active' from all three sections.
+    document.getElementById('toBeReadSection').classList.remove('active');
+    document.getElementById('currentlyReadingSection').classList.remove('active');
+    document.getElementById('finishedBooksSection').classList.remove('active');
+    // Add 'active' to the selected section.
+    document.getElementById(targetSection).classList.add('active');
+    // Do not hide the bottom bar (as per your preference).
+    // Update the visibility of the Sort Books button (only for Finished Books).
+    updateSortButtonVisibility();
+    // Hide the dropdown after selection.
+    sectionDropdown.classList.add('hidden');
+  });
+});
+
+// --- Add Book Button ---
+// Toggle the Add Book modal.
+bottomAdd.addEventListener('click', () => {
   console.log("Bottom Add clicked");
   const addBookModal = document.getElementById('addBookModal');
-  // Toggle the modal: if it is active, close it; if it is closed, open it.
   if (addBookModal.classList.contains('active')) {
-    // Close the modal
     closeModal(addBookModal);
+    console.log("Add Book modal closed via bottom bar");
   } else {
-    // Open the modal
     addBookModal.style.display = 'flex';
     addBookModal.classList.add('active');
+    console.log("Add Book modal opened via bottom bar");
   }
 });
 

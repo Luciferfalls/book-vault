@@ -30,6 +30,7 @@
             </div>
         </div>
 
+    <div class="desktop-only">
         <div class="toggle-buttons">
             <button id="toBeReadBtn">To Be Read</button>
             <button id="currentlyReadingBtn" class="active">Currently Reading</button>
@@ -41,11 +42,12 @@
             <button id="openAddBookModal" class="add-book-link">Add Book</button>
             <button id="toggleView">Toggle View</button>
         </div>
+        </div>
     </div>
 
     <!-- Book List Section -->
     <div class="container">
-        <button id="sortToggle" class="sort-toggle">Sort Books</button>
+        <div class="desktop-only"><button id="sortToggle" class="sort-toggle">Sort Books</button></div>
         <div id="toBeReadSection" class="book-section">
             <h2>To Be Read</h2>
         </div>
@@ -263,16 +265,31 @@
 
 <script defer src="js/script.js"></script>
 
-<!-- Floating Action Button (FAB) for Mobile Controls -->
-<button id="fab" class="fab">☰</button>
-
-<!-- Bottom Bar Container (initially hidden) -->
-<div id="bottomBar" class="bottom-bar hidden">
-  <button id="bottomSort" class="bottom-btn">Sort Books</button>
-  <button id="bottomToggle" class="bottom-btn">Toggle View</button>
-  <button id="bottomSection" class="bottom-btn">Switch Section</button>
-  <button id="bottomAdd" class="bottom-btn">Add Book</button>
-</div>
+<!-- Mobile Bottom Controls (visible only on mobile) -->
+<div class="mobile-only">
+    <!-- Floating Action Button (FAB) -->
+    <button id="fab" class="fab">☰</button>
+  
+    <!-- Bottom Bar Container (initially hidden) -->
+    <div id="bottomBar" class="bottom-bar hidden">
+      <!-- We'll include a dedicated close button so the FAB is not our only way to close -->
+      <button id="bottomClose" class="bottom-btn">✕</button>
+      <!-- Sort Books button: Only visible in Finished Books -->
+      <button id="bottomSort" class="bottom-btn">Sort Books</button>
+      <!-- Toggle View button with an icon -->
+      <button id="bottomToggle" class="bottom-btn">🔲</button>
+      <!-- Switch Section button -->
+      <button id="bottomSection" class="bottom-btn">Switch Section</button>
+      <!-- Add Book button -->
+      <button id="bottomAdd" class="bottom-btn">Add Book</button>
+      <!-- Dropdown for Switch Section (initially hidden) -->
+      <div id="sectionDropdown" class="section-dropdown hidden">
+        <button class="section-option" data-section="toBeReadSection">To Be Read</button>
+        <button class="section-option" data-section="currentlyReadingSection">Currently Reading</button>
+        <button class="section-option" data-section="finishedBooksSection">Finished Books</button>
+      </div>
+    </div>
+  </div>    
 
 </body>
 </html>
