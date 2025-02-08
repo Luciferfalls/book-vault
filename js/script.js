@@ -94,18 +94,22 @@ function attachGridViewListeners() {
     const bookEntries = document.querySelectorAll('.book-entry');
 
     bookEntries.forEach(entry => {
-        entry.addEventListener('click', () => {
-            if (entry.closest('.grid-view')) {
-                entry.classList.toggle('expanded');
-            } else {
-                const coverModal = document.getElementById('coverModal');
-                const coverModalImage = document.getElementById('coverModalImage');
-                coverModalImage.src = entry.style.backgroundImage.slice(5, -2);
-                coverModal.style.display = 'flex';
-                coverModal.classList.add('active');
-            }
+        entry.addEventListener('click', (e) => {
+          // Check if the parent container (or document body) has the grid-view class.
+          // You may have a global variable or a class on the container that indicates the view.
+          if (document.body.classList.contains('grid-view')) {
+            // In grid view, do nothing (or do something else, like open a detailed view within the grid)
+            console.log("Grid view: cover click ignored for modal");
+          } else {
+            // In list view, open the modal as usual.
+            const coverModal = document.getElementById('coverModal');
+            const coverModalImage = document.getElementById('coverModalImage');
+            coverModalImage.src = entry.querySelector('.book-cover').src;
+            coverModal.style.display = 'flex';
+            coverModal.classList.add('active');
+          }
         });
-    });
+      });      
 }
 
 coverUrlField.addEventListener('input', () => {
