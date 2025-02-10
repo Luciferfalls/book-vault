@@ -568,21 +568,21 @@ function displayBooks() {
 
         // Set the inner HTML for book details
         bookElement.innerHTML = `
-            <div class="book-container">
-                <div class="cover-and-options">
-                    <img src="${book.cover}" alt="${book.title} Cover" class="book-cover">
-                    <button class="more-options-btn">...</button>
-                    <div class="dropdown hidden book-options">
-                        <button class="edit-btn">Edit</button>
-                        <button class="delete-btn" data-book-id="${book.id}">Delete</button>
-                        <button class="adjust-background-btn" data-book-id="${book.id}">Adjust Background</button>
-                    </div>
+            <div class="book-entry-split">
+                <div class="cover-container">
+                <img src="${book.cover}" alt="${book.title} Cover" class="book-cover">
+                <button class="more-options-btn">...</button>
+                <div class="dropdown hidden book-options">
+                    <button class="edit-btn">Edit</button>
+                    <button class="delete-btn" data-book-id="${book.id}">Delete</button>
+                    <button class="adjust-background-btn" data-book-id="${book.id}">Adjust Background</button>
                 </div>
-                <div class="book-details">
-                    <h3>${book.title}</h3>
-                    <p>${book.author}</p>
-                    <p>${book.year}</p>
-                    <p>${book.pages} pages</p>
+                </div>
+                <div class="info-container">
+                <h3>${book.title}</h3>
+                <p>${book.author}</p>
+                <p>${book.year}</p>
+                <p>${book.pages} pages</p>
                 </div>
             </div>
         `;
@@ -683,7 +683,7 @@ function displayBooks() {
             });
             updateAppState();
         });
-        const bookDetailsDiv = bookElement.querySelector('.book-details');
+        const bookDetailsDiv = bookElement.querySelector('.info-container');
         bookDetailsDiv.prepend(pinButton);
 
         // ----- Start Reading Button for TBR Books -----
@@ -720,27 +720,27 @@ function displayBooks() {
         const formattedTime = book.timeToRead ? formatTime(book.timeToRead) : 'N/A';
 
         bookElement.innerHTML = `
-            <div class="book-container">
-                <div class="cover-and-options">
-                    <img src="${book.cover}" alt="${book.title} Cover" class="book-cover">
-                    <button class="more-options-btn">...</button>
-                    <div class="dropdown hidden book-options">
-                        <button class="edit-btn">Edit</button>
-                        <button class="delete-btn" data-book-id="${book.id}">Delete</button>
-                        <button class="adjust-background-btn" data-book-id="${book.id}">Adjust Background</button>
-                    </div>
-                </div>
-                <div class="book-details">
-                    <h3>${book.title}</h3>
-                    <p>${book.author}</p>
-                    <p>${book.year}</p>
-                    <p>${book.pages} pages</p>
-                    ${book.tbr ? '' : `<p><strong>Start Date:</strong> ${formatDate(book.startDate)}</p>`}
-                    ${book.finished ? `<p><strong>End Date:</strong> ${formatDate(book.endDate)}</p>` : ''}
-                    ${book.finished && book.pagesPerHour ? `<p><strong>Pages per Hour:</strong> ${book.pagesPerHour}</p>` : ''}
-                    ${book.finished && book.timeToRead ? `<p><strong>Total Reading Time:</strong> ${formatReadingTime(book.timeToRead)}</p>` : ''}
-                </div>
+        <div class="book-entry-split">
+            <div class="cover-container">
+            <img src="${book.cover}" alt="${book.title} Cover" class="book-cover">
+            <button class="more-options-btn">...</button>
+            <div class="dropdown hidden book-options">
+                <button class="edit-btn">Edit</button>
+                <button class="delete-btn" data-book-id="${book.id}">Delete</button>
+                <button class="adjust-background-btn" data-book-id="${book.id}">Adjust Background</button>
             </div>
+            </div>
+            <div class="info-container">
+            <h3>${book.title}</h3>
+            <p>${book.author}</p>
+            <p>${book.year}</p>
+            <p>${book.pages} pages</p>
+            ${book.tbr ? '' : `<p><strong>Start Date:</strong> ${formatDate(book.startDate)}</p>`}
+            ${book.finished ? `<p><strong>End Date:</strong> ${formatDate(book.endDate)}</p>` : ''}
+            ${book.finished && book.pagesPerHour ? `<p><strong>Pages per Hour:</strong> ${book.pagesPerHour}</p>` : ''}
+            ${book.finished && book.timeToRead ? `<p><strong>Total Reading Time:</strong> ${formatReadingTime(book.timeToRead)}</p>` : ''}
+            </div>
+        </div>
         `;
 
         // Attach the click listener only to the cover image:
@@ -868,14 +868,14 @@ function displayBooks() {
             startReadingBtn.classList.add('start-reading-btn');
             startReadingBtn.dataset.bookId = book.id;
             startReadingBtn.addEventListener('click', () => openStartReadingModal(book.id));
-            bookElement.querySelector('.book-details').appendChild(startReadingBtn);
+            bookElement.querySelector('.info-container').appendChild(startReadingBtn);
         } else if (!book.finished) {
             const markFinishedBtn = document.createElement('button');
             markFinishedBtn.textContent = 'Mark as Finished';
             markFinishedBtn.classList.add('finish-btn');
             markFinishedBtn.dataset.bookId = book.id;
             markFinishedBtn.addEventListener('click', () => openFinishReadingModal(book.id));
-            bookElement.querySelector('.book-details').appendChild(markFinishedBtn);
+            bookElement.querySelector('.info-container').appendChild(markFinishedBtn);
         }
 
         // More options button functionality
