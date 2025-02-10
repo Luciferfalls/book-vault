@@ -1486,13 +1486,6 @@ document.getElementById('addBookCover').addEventListener('change', (e) => {
     document.getElementById('coverPreview').src = url || './images/placeholder.jpeg';
 });
 
-const reorderButton = document.createElement('button');
-reorderButton.textContent = 'Reorder Books';
-reorderButton.addEventListener('click', () => {
-    finishedBooksSection.classList.toggle('reorder-mode');
-});
-document.body.appendChild(reorderButton);
-
 const reorderToggleButton = document.createElement('button');
 reorderToggleButton.textContent = 'Reorder Mode';
 reorderToggleButton.addEventListener('click', () => {
