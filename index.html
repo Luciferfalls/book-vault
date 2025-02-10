@@ -194,12 +194,6 @@
     </div>
 </div>
 
-<!-- Enlarged Cover Modal -->
-<div id="coverModal" class="modal">
-    <img id="coverModalImage" src="" alt="Book Cover">
-    <button class="close-modal">Close</button>
-</div>
-
 <!--Cover Search Modal-->
 <div id="coverSearchModal" class="modal hidden">
     <div class="modal-content">
@@ -265,6 +259,32 @@
 
 <script defer src="js/script.js"></script>
 
+<!-- Book Details Modal – New -->
+<div id="bookDetailsModal" class="modal">
+  <div class="book-details-modal">
+    <!-- Close button -->
+    <button class="close-modal" id="closeBookDetails">&times;</button>
+    <!-- Book cover container -->
+    <div class="book-cover-container">
+      <img id="modalBookCover" src="" alt="Book Cover">
+    </div>
+    <!-- Book info container with individual detail boxes -->
+    <div class="book-info-container">
+      <div class="detail-box" id="modalTitle"></div>
+      <div class="detail-box" id="modalAuthor"></div>
+      <div class="detail-box" id="modalYear"></div>
+      <div class="detail-box" id="modalPages"></div>
+      <!-- You can add more detail boxes here as needed -->
+    </div>
+    <!-- Buttons for actions (modify the onclicks as desired) -->
+    <div class="modal-buttons">
+      <button id="modalStartReading" onclick="openStartReadingModalFromModal()">Start Reading</button>
+      <button id="modalMarkFinished" onclick="openFinishReadingModalFromModal()">Mark as Finished</button>
+      <button id="modalMoreOptions" onclick="openMoreOptionsModalFromModal()">More Options</button>
+    </div>
+  </div>
+</div> 
+
 <!-- Mobile Bottom Controls (visible only on mobile) -->
 <div class="mobile-only">
     <!-- Floating Action Button (FAB) -->
@@ -289,7 +309,7 @@
         <button class="section-option" data-section="finishedBooksSection">Finished Books</button>
       </div>
     </div>
-  </div>    
+</div>      
 
 </body>
 </html>

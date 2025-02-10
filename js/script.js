@@ -19,9 +19,6 @@ const coverElement = document.getElementById('addBookCover');
 const cover = coverElement ? coverElement.value.trim() : './images/placeholder.jpeg';
 const resultsContainer = document.getElementById('results-container');
 
-// Select modal elements
-const coverModal = document.getElementById('coverModal');
-const coverModalImage = document.getElementById('coverModalImage');
 
 let currentYear = new Date().getFullYear();
 let yearlyGoal = 50;  // Default Goal
@@ -52,7 +49,20 @@ function debounce(func, delay) {
         func.apply(this, args);
       }, delay);
     }
-  }  
+}  
+
+function formatReadingTime(timeStr) {
+    // Expect timeStr to be in "XX:XX" format.
+    const parts = timeStr.split(":");
+    if (parts.length !== 2) {
+      return timeStr; // Return the original string if format is unexpected.
+    }
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    const hourText = hours + " hour" + (hours === 1 ? "" : "s");
+    const minuteText = minutes + " minute" + (minutes === 1 ? "" : "s");
+    return hourText + " and " + minuteText;
+}
 
 const sortToggleBtn = document.getElementById('sortToggle');
 if (sortToggleBtn) {
@@ -92,25 +102,20 @@ if (sortToggleBtn) {
 
 function attachGridViewListeners() {
     const bookEntries = document.querySelectorAll('.book-entry');
-
     bookEntries.forEach(entry => {
-        entry.addEventListener('click', (e) => {
-          // Check if the parent container (or document body) has the grid-view class.
-          // You may have a global variable or a class on the container that indicates the view.
-          if (document.body.classList.contains('grid-view')) {
-            // In grid view, do nothing (or do something else, like open a detailed view within the grid)
-            console.log("Grid view: cover click ignored for modal");
-          } else {
-            // In list view, open the modal as usual.
-            const coverModal = document.getElementById('coverModal');
-            const coverModalImage = document.getElementById('coverModalImage');
-            coverModalImage.src = entry.querySelector('.book-cover').src;
-            coverModal.style.display = 'flex';
-            coverModal.classList.add('active');
-          }
-        });
-      });      
-}
+      entry.addEventListener('click', (e) => {
+        // In both grid and list view, open the Book Details Modal instead of any old cover modal
+        // (Assuming you have a way to get the corresponding book object for this entry.
+        // For example, you might store the book ID as a data attribute on the entry.)
+        const bookId = entry.getAttribute('data-book-id');
+        // Find the book object from allBooks
+        const book = allBooks.find(b => b.id === bookId);
+        if (book) {
+          openBookDetailsModal(book);
+        }
+      });
+    });
+} 
 
 coverUrlField.addEventListener('input', () => {
     const url = coverUrlField.value.trim();
@@ -562,6 +567,17 @@ function displayBooks() {
             </div>
         `;
 
+        // Attach the click listener only to the cover image:
+        const coverImage = bookElement.querySelector('.book-cover');
+        if (coverImage) {
+        coverImage.addEventListener('click', (e) => {
+            // Prevent the click from propagating up
+            e.stopPropagation();
+            // Open the book details modal for this book.
+            openBookDetailsModal(book);
+        });
+        }
+
         // ----- More Options Toggle for TBR Books -----
         const moreOptionsBtn = bookElement.querySelector('.more-options-btn');
         const dropdown = bookElement.querySelector('.dropdown');
@@ -657,7 +673,7 @@ function displayBooks() {
         startReadingBtn.dataset.bookId = book.id;
         startReadingBtn.addEventListener('click', () => openStartReadingModal(book.id));
         bookDetailsDiv.appendChild(startReadingBtn);
-
+        
         // Append the TBR book element to the TBR section
         toBeReadSection.appendChild(bookElement);
     });
@@ -702,10 +718,21 @@ function displayBooks() {
                     ${book.tbr ? '' : `<p><strong>Start Date:</strong> ${formatDate(book.startDate)}</p>`}
                     ${book.finished ? `<p><strong>End Date:</strong> ${formatDate(book.endDate)}</p>` : ''}
                     ${book.finished && book.pagesPerHour ? `<p><strong>Pages per Hour:</strong> ${book.pagesPerHour}</p>` : ''}
-                    ${book.finished && book.timeToRead ? `<p><strong>Total Reading Time:</strong> ${book.timeToRead}</p>` : ''}
+                    ${book.finished && book.timeToRead ? `<p><strong>Total Reading Time:</strong> ${formatReadingTime(book.timeToRead)}</p>` : ''}
                 </div>
             </div>
         `;
+
+        // Attach the click listener only to the cover image:
+        const coverImage = bookElement.querySelector('.book-cover');
+        if (coverImage) {
+        coverImage.addEventListener('click', (e) => {
+            // Prevent the click from propagating up
+            e.stopPropagation();
+            // Open the book details modal for this book.
+            openBookDetailsModal(book);
+        });
+        }
 
         const adjustBackgroundButton = bookElement.querySelector('.adjust-background-btn');
         if (adjustBackgroundButton) {
@@ -1116,23 +1143,6 @@ if (addBookForm) {
 } else {
     console.warn("Element with id 'addBookForm' not found.");
 }
-
-
-// Add event listener to book covers
-document.addEventListener('click', (event) => {
-    if (event.target.classList.contains('book-cover')) {
-        const coverSrc = event.target.src;
-        coverModalImage.src = coverSrc;
-        coverModal.classList.add('active');
-        coverModal.style.display = 'flex';
-    }
-});
-
-// Close modal when clicking "X" or outside modal
-coverModal.addEventListener('click', () => {
-    coverModal.classList.remove('active');
-    coverModal.style.display = 'none';
-});
 
 async function searchBooks(query, searchType = "intitle") {
     const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${searchType}:${encodeURIComponent(query)}`;
@@ -1638,5 +1648,81 @@ bottomAdd.addEventListener('click', () => {
     console.log("Add Book modal opened via bottom bar");
   }
 });
+
+// Function to open the Book Details Modal and populate it with the book’s info
+function openBookDetailsModal(book) {
+    console.log("Book object:", book);
+    // Set the cover image (assuming you have an element with id "modalBookCover")
+    const coverEl = document.getElementById('modalBookCover');
+    if (coverEl) {
+      coverEl.src = book.cover || './images/placeholder.jpeg';
+    }
+    
+    // Set the book title in the modal (this is the fix)
+    const titleEl = document.getElementById('modalTitle');
+    if (titleEl) {
+      titleEl.innerText = "Title: " + book.title;
+    }
+    
+    // (Optional) Set additional details if you have corresponding elements:
+    const authorEl = document.getElementById('modalAuthor');
+    if (authorEl) {
+      authorEl.innerText = "Author: " + book.author;
+    }
+    const yearEl = document.getElementById('modalYear');
+    if (yearEl) {
+      yearEl.innerText = "Year: " + book.year;
+    }
+    const pagesEl = document.getElementById('modalPages');
+    if (pagesEl) {
+      pagesEl.innerText = "Pages: " + book.pages;
+    }
+    
+    // Display the modal
+    const modal = document.getElementById('bookDetailsModal');
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+}  
+
+// Attach click event to the close button in the modal
+document.getElementById('closeBookDetails').addEventListener('click', closeBookDetailsModal);
+
+// Close the modal when clicking outside the modal content
+window.addEventListener('click', (e) => {
+  const modal = document.getElementById('bookDetailsModal');
+  // If the modal is active and the click target is the modal itself (not its inner content)
+  if (modal.classList.contains('active') && e.target === modal) {
+    closeBookDetailsModal();
+  }
+});
+
+// Close the modal when pressing the Escape key
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeBookDetailsModal();
+  }
+});
+
+function closeBookDetailsModal() {
+    const modal = document.getElementById('bookDetailsModal');
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+}
+
+function openEditBookModalFromModal(bookId) {
+    const book = allBooks.find(b => b.id === bookId);
+    if (book) {
+      openEditBookModal(book);
+    }
+    closeBookDetailsModal();
+}
+
+// When the close button in the Book Details Modal is clicked, close the modal.
+document.getElementById('bookDetailsClose').addEventListener('click', closeBookDetailsModal);
+
+window.openStartReadingModal = openStartReadingModal;
+window.openFinishReadingModal = openFinishReadingModal;
+window.openEditBookModalFromModal = openEditBookModalFromModal;  // if not already global
+window.deleteBook = deleteBook;
 
 });  

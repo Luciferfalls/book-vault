@@ -255,6 +255,12 @@ button:hover {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5); /* Add depth on hover */
 }
 
+.book-cover-large {
+    width: 150px;       /* Force the width to 150px */
+    height: auto;       /* Maintain aspect ratio */
+    object-fit: cover;  /* Ensure the image fills the box without distortion */
+  }
+  
 #coverModal {
     display: none;
     position: fixed;
@@ -380,6 +386,104 @@ button:hover {
     transform: translateY(-2px); /* Slight lift effect on hover */
     box-shadow: 0 6px 12px rgba(255, 0, 0, 0.5); /* Intensify glow on hover */
 }
+
+/* Modal container – full screen overlay */
+#bookDetailsModal {
+    display: none; 
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.8);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+  
+/* When active, display the modal as a flex container */
+  #bookDetailsModal.active {
+    display: flex;
+}
+  
+/* Modal content container */
+  .book-details-modal {
+    background: #1f3b73;
+    padding: 20px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 800px;
+    text-align: center;
+    box-sizing: border-box;
+    position: relative;
+}
+  
+/* Close button – adjust as needed */
+  .book-details-modal .close-modal {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    color: #fff;
+    cursor: pointer;
+}
+
+/* Book cover in the modal: fixed size, centered, with red shadow and hover enlarge */
+.book-cover-container {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .book-cover-container img {
+    width: 250px;
+    height: auto;
+    box-shadow: 0 4px 8px rgba(255, 0, 0, 0.8);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: inline-block;
+  }
+  .book-cover-container img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(255, 0, 0, 1);
+}
+  
+/* Style the book info container */
+  .book-info-container {
+    margin-top: 20px;
+}
+  
+/* Each detail box with a red shadow */
+  .detail-box {
+    padding: 10px;
+    margin: 10px auto;
+    background-color: rgba(255,255,255,0.1);
+    border-radius: 5px;
+    box-shadow: 0 0 5px 2px red;
+    max-width: 90%;
+    color: #fff;
+    font-size: 1rem;
+}
+  
+  /* Style for the modal buttons */
+  .modal-buttons {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+  .modal-buttons button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #3a6ea5;
+    color: white;
+    transition: background 0.3s ease;
+}
+  .modal-buttons button:hover {
+    background-color: #4b8ed7;
+}  
 
 /* ===== Utility Classes ===== */
 .hidden {
