@@ -627,19 +627,30 @@ button, .add-book-link {
     margin-bottom: 10px;
 }
 
+/* Default modal styles (for desktop) */
 .modal {
     display: none;
     position: fixed;
     z-index: 1000;
     left: 0;
     top: 0;
-    bottom: 61px;  /* Leaves 60px of space at the bottom */
     width: 100vw;
+    height: 100vh;
     background: rgba(0, 0, 0, 0.6);
     align-items: center;
     justify-content: center;
     overflow-y: auto;
-  }  
+}
+  
+/* Mobile-specific overrides */
+@media (max-width: 768px) {
+    .modal {
+      /* Instead of using 100vh, leave room at the bottom */
+      top: 0;
+      bottom: 61px;  /* Adjust this value to set the desired space at the bottom */
+      height: calc(100vh - 60px);
+    }
+}  
 
 .modal .close-modal {
     position: absolute;
