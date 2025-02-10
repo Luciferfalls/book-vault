@@ -992,7 +992,7 @@ form .form-group input {
     position: relative;
 }
 
-.grid-view .book-entry .book-details,
+.grid-view .book-entry .info-container,
 .grid-view .book-entry .dropdown,
 .grid-view .book-entry .more-options-btn {
     display: none;
@@ -1003,7 +1003,7 @@ form .form-group input {
     display: block;
 }
 
-.grid-view .book-entry.expanded .book-details {
+.grid-view .book-entry.expanded .info-container {
     display: block;
 }
 
@@ -1261,12 +1261,12 @@ margin: 2px 0;
 }
   
 /* Hide the extra details by default in grid view */
-  .container.grid-view .book-entry .book-details {
+  .container.grid-view .book-entry .info-container {
     display: none;
 }
   
 /* When a grid entry has the class "show-details", display the details overlay */
-.container.grid-view .book-entry.show-details .book-details {
+.container.grid-view .book-entry.show-details .info-container {
     display: block;
     position: absolute;
     top: 0;
