@@ -1306,12 +1306,18 @@ margin: 2px 0;
 }
   
 .info-container {
-    flex: 1;
+    flex: 0 0 auto;
     text-align: left; /* Desktop: left-aligned text */
     margin: 0;
     padding: 10px;
     font-size: 1rem;
-    width: fit-content;
+    display: inline-block;
+    vertical-align: top;
+    display: inline-block;
+    width: -moz-fit-content;   /* For Firefox */
+    width: -webkit-fit-content;/* For Chrome/Safari */
+    width: fit-content;        /* Standard syntax */
+    text-align: left;          /* Left-align text */
 }
 
 .info-container p {
@@ -1322,9 +1328,8 @@ margin: 2px 0;
     border: 1px solid rgba(255, 0, 0, 0.6); /* Subtle red border */
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(255, 0, 0, 0.3); /* Red glow effect */
-    text-align: left;
+    text-align: center;
     transition: transform 0.2s ease, box-shadow 0.3s ease;
-    width: fit-content;
 }
 
 .info-container h3 {
@@ -1340,6 +1345,12 @@ margin: 2px 0;
     text-shadow: 0 4px 8px rgba(255, 0, 0, 0.6);
     color: gold; 
     width: fit-content;
+}
+
+.info-container > h3,
+.info-container > p {
+  display: block;
+  width: 100%;
 }
   
 /* Mobile override: stack the cover and info vertically */
