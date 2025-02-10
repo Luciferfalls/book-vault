@@ -1696,7 +1696,52 @@ function openBookDetailsModal(book) {
         </div>
       </div>
     `;
-  
+    
+    // --- Build the modal buttons dynamically ---
+    // (Assumes that your modal now contains a container with the class "modal-buttons")
+    const modalButtonsContainer = document.querySelector('.modal-buttons');
+    if (modalButtonsContainer) {
+    // Clear any existing buttons
+    modalButtonsContainer.innerHTML = '';
+
+    // Always add the Edit button:
+    const editBtn = document.createElement('button');
+    editBtn.innerText = 'Edit';
+    editBtn.addEventListener('click', () => {
+        openEditBookModalFromModal(book.id);
+    });
+    modalButtonsContainer.appendChild(editBtn);
+
+    // Always add the Delete button:
+    const deleteBtn = document.createElement('button');
+    deleteBtn.innerText = 'Delete';
+    deleteBtn.addEventListener('click', () => {
+        deleteBook(book.id);
+        closeBookDetailsModal();
+    });
+    modalButtonsContainer.appendChild(deleteBtn);
+
+    // Add a third button based on book status:
+    if (book.tbr) {
+        // For TBR books, add "Start Reading"
+        const startReadingBtn = document.createElement('button');
+        startReadingBtn.innerText = 'Start Reading';
+        startReadingBtn.addEventListener('click', () => {
+        openStartReadingModalFromModal(book.id);
+        });
+        modalButtonsContainer.appendChild(startReadingBtn);
+    } else if (!book.finished) {
+        // For currently reading books, add "Mark as Finished"
+        const markFinishedBtn = document.createElement('button');
+        markFinishedBtn.innerText = 'Mark as Finished';
+        markFinishedBtn.addEventListener('click', () => {
+        openFinishReadingModalFromModal(book.id);
+        });
+        modalButtonsContainer.appendChild(markFinishedBtn);
+    }
+    // (For finished books, no extra button is added.)
+    }
+
     // Show the modal
     modal.classList.add('active');
     modal.style.display = 'flex';
@@ -1756,9 +1801,26 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
+// Add these two functions in your scripts.js (place them near the bottom of your DOMContentLoaded block):
 
-window.openStartReadingModal = openStartReadingModal;
-window.openFinishReadingModal = openFinishReadingModal;
+function openStartReadingModalFromModal(bookId) {
+    // Close the Book Details Modal first.
+    closeBookDetailsModal();
+    // Then open the Start Reading Modal using your existing function.
+    openStartReadingModal(bookId);
+  }
+  
+  function openFinishReadingModalFromModal(bookId) {
+    // Close the Book Details Modal first.
+    closeBookDetailsModal();
+    // Then open the Finish Reading Modal using your existing function.
+    openFinishReadingModal(bookId);
+}
+  
+// (Optional) Attach these to the global window if you use inline onclick attributes:
+window.openStartReadingModalFromModal = openStartReadingModalFromModal;
+window.openFinishReadingModalFromModal = openFinishReadingModalFromModal;  
+
 window.openEditBookModalFromModal = openEditBookModalFromModal;  // if not already global
 window.deleteBook = deleteBook;
 
