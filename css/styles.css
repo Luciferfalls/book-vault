@@ -669,7 +669,7 @@ button, .add-book-link {
     box-sizing: border-box;
     position: relative;
     -webkit-overflow-scrolling: touch;  /* For iOS smooth scrolling */
-    padding-bottom: 40px;
+    padding-bottom: 70px;
 }
 
 .modal-content h2 {
