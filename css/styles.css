@@ -664,10 +664,12 @@ button, .add-book-link {
     width: 40%;
     max-width: 600px;
     min-width: 300px;
-    max-height: 90vh; /* Limit modal height */
+    max-height: calc(100vh - 60px); /* Limit modal height */
     overflow-y: auto; /* Enable scrolling for overflowing content */
     box-sizing: border-box;
     position: relative;
+    -webkit-overflow-scrolling: touch;  /* For iOS smooth scrolling */
+    padding-bottom: 40px;
 }
 
 .modal-content h2 {
