@@ -422,19 +422,24 @@ function handleFinishReadingSubmit(e) {
     e.preventDefault();
 
     const form = e.target;
-    const bookId = form.dataset.bookId; // Retrieve the book ID attached to the form
-    console.log(`Submitting Finish Reading for bookId: ${bookId}`); // Debug log
+    const bookId = form.dataset.bookId;
+    console.log(`Submitting Finish Reading for bookId: ${bookId}`);
 
+    // Get the end date (required)
     const endDate = form.querySelector('#finishReadingDate').value.trim();
-    const pagesPerHour = parseFloat(form.querySelector('#pagesPerHour').value.trim());
-    const timeToRead = form.querySelector('#timeToRead').value.trim();
-
-    console.log(`End Date: ${endDate}, Pages Per Hour: ${pagesPerHour}, Time to Read: ${timeToRead}`);
-
-    if (!endDate || isNaN(pagesPerHour) || !timeToRead) {
-        alert('All fields are required.');
+    if (!endDate) {
+        alert('End date is required.');
         return;
     }
+
+    // Get pages per hour as a string; if nonempty, parse it; otherwise assign null.
+    const pagesPerHourStr = form.querySelector('#pagesPerHour').value.trim();
+    const pagesPerHour = pagesPerHourStr ? parseFloat(pagesPerHourStr) : null;
+
+    // Get time to read as a string; if blank, assign null.
+    const timeToRead = form.querySelector('#timeToRead').value.trim() || null;
+
+    console.log(`End Date: ${endDate}, Pages Per Hour: ${pagesPerHour}, Time to Read: ${timeToRead}`);
 
     allBooks = allBooks.map(book => {
         if (book.id === bookId) {
@@ -454,28 +459,43 @@ function handleFinishReadingSubmit(e) {
     });
 
     console.log('Updated allBooks array:', allBooks);
-
     updateAppState();
     closeModal(document.getElementById('finishReadingModal'));
 }
+
 
 function handleFinishReadingSubmit(e) {
     e.preventDefault();
 
     const form = e.target;
     const bookId = form.dataset.bookId; // Retrieve the book ID attached to the form
-    console.log(`Submitting Finish Reading for bookId: ${bookId}`); // Debug log
+    console.log(`Submitting Finish Reading for bookId: ${bookId}`);
 
+    // Get the raw input values as strings.
     const endDate = form.querySelector('#finishReadingDate').value.trim();
-    const pagesPerHour = parseFloat(form.querySelector('#pagesPerHour').value.trim());
-    const timeToRead = form.querySelector('#timeToRead').value.trim();
+    const pagesPerHourStr = form.querySelector('#pagesPerHour').value.trim();
+    const timeToReadStr = form.querySelector('#timeToRead').value.trim();
 
-    console.log(`End Date: ${endDate}, Pages Per Hour: ${pagesPerHour}, Time to Read: ${timeToRead}`);
-
-    if (!endDate || isNaN(pagesPerHour) || !timeToRead) {
-        alert('All fields are required.');
+    // Require only the end date.
+    if (!endDate) {
+        alert('End date is required.');
         return;
     }
+
+    // For pages per hour, only parse if not empty.
+    let pagesPerHour = null;
+    if (pagesPerHourStr !== "") {
+        pagesPerHour = parseFloat(pagesPerHourStr);
+        if (isNaN(pagesPerHour)) {
+            alert('Pages per hour must be a valid number if provided.');
+            return;
+        }
+    }
+
+    // For time to read, use the value if not empty; otherwise, set to null.
+    const timeToRead = timeToReadStr !== "" ? timeToReadStr : null;
+
+    console.log(`End Date: ${endDate}, Pages Per Hour: ${pagesPerHour}, Time to Read: ${timeToRead}`);
 
     allBooks = allBooks.map(book => {
         if (book.id === bookId) {
