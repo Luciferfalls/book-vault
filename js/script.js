@@ -1649,40 +1649,65 @@ bottomAdd.addEventListener('click', () => {
   }
 });
 
-// Function to open the Book Details Modal and populate it with the book’s info
+// Helper function to convert "HH:MM" into "HH hours and MM minutes"
+function convertTimeFormat(timeStr) {
+    const parts = timeStr.split(':');
+    const hrs = parseInt(parts[0], 10);
+    const mins = parseInt(parts[1], 10);
+    return `${hrs} hours and ${mins} minutes`;
+}
+  
 function openBookDetailsModal(book) {
-    console.log("Book object:", book);
-    // Set the cover image (assuming you have an element with id "modalBookCover")
-    const coverEl = document.getElementById('modalBookCover');
-    if (coverEl) {
-      coverEl.src = book.cover || './images/placeholder.jpeg';
-    }
-    
-    // Set the book title in the modal (this is the fix)
-    const titleEl = document.getElementById('modalTitle');
-    if (titleEl) {
-      titleEl.innerText = "Title: " + book.title;
-    }
-    
-    // (Optional) Set additional details if you have corresponding elements:
-    const authorEl = document.getElementById('modalAuthor');
-    if (authorEl) {
-      authorEl.innerText = "Author: " + book.author;
-    }
-    const yearEl = document.getElementById('modalYear');
-    if (yearEl) {
-      yearEl.innerText = "Year: " + book.year;
-    }
-    const pagesEl = document.getElementById('modalPages');
-    if (pagesEl) {
-      pagesEl.innerText = "Pages: " + book.pages;
-    }
-    
-    // Display the modal
     const modal = document.getElementById('bookDetailsModal');
+    const content = document.getElementById('bookDetailsContent');
+  
+    // Build extra details based on the book’s status:
+    let extraDetails = "";
+    if (!book.tbr && !book.finished && book.startDate) {
+      // Currently Reading (assumes book is not finished and not TBR)
+      extraDetails += `<p><strong>Start Date:</strong> ${formatDate(book.startDate)}</p>`;
+    }
+    if (book.finished) {
+      extraDetails += `<p><strong>Start Date:</strong> ${book.startDate ? formatDate(book.startDate) : "N/A"}</p>`;
+      extraDetails += `<p><strong>End Date:</strong> ${book.endDate ? formatDate(book.endDate) : "N/A"}</p>`;
+      extraDetails += `<p><strong>Pages per Hour:</strong> ${book.pagesPerHour ? book.pagesPerHour : "N/A"}</p>`;
+      extraDetails += `<p><strong>Total Reading Time:</strong> ${book.timeToRead ? convertTimeFormat(book.timeToRead) : "N/A"}</p>`;
+    }
+  
+    // Build modal buttons based on book type:
+    let buttonsHTML = "";
+    if (book.tbr) {
+      buttonsHTML = `<button id="modalStartReading" onclick="openStartReadingModalFromModal('${book.id}')">Start Reading</button>`;
+    } else if (!book.finished) {
+      buttonsHTML = `<button id="modalMarkFinished" onclick="openFinishReadingModalFromModal('${book.id}')">Mark as Finished</button>`;
+    } else if (book.finished) {
+      buttonsHTML = `<button id="modalEdit" onclick="openEditBookModalFromModal('${book.id}')">Edit</button>
+                     <button id="modalDelete" onclick="deleteBookFromModal('${book.id}')">Delete</button>`;
+    }
+  
+    // Rebuild the modal content markup:
+    content.innerHTML = `
+      <div class="book-details">
+        <div class="modal-book-cover-container" style="text-align: center;">
+          <img src="${book.cover || './images/placeholder.jpeg'}" alt="${book.title} Cover" class="book-cover-img" style="width:250px; height:auto; box-shadow: 0 4px 8px rgba(255,0,0,0.8); transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+        </div>
+        <div class="modal-book-info" style="text-align: center; margin-top: 15px;">
+          <h3>${book.title}</h3>
+          <p>${book.author}</p>
+          <p>${book.year}</p>
+          <p>${book.pages} pages</p>
+          ${extraDetails}
+        </div>
+        <div class="modal-buttons" style="text-align: center; margin-top: 20px;">
+          ${buttonsHTML}
+        </div>
+      </div>
+    `;
+  
+    // Show the modal
     modal.classList.add('active');
     modal.style.display = 'flex';
-}  
+}   
 
 // Attach click event to the close button in the modal
 document.getElementById('closeBookDetails').addEventListener('click', closeBookDetailsModal);
@@ -1705,9 +1730,10 @@ window.addEventListener('keydown', (e) => {
 
 function closeBookDetailsModal() {
     const modal = document.getElementById('bookDetailsModal');
-    modal.classList.add('hidden');
+    modal.classList.remove('active');
     modal.style.display = 'none';
-}
+    document.getElementById('bookDetailsContent').innerHTML = "";
+}  
 
 function openEditBookModalFromModal(bookId) {
     const book = allBooks.find(b => b.id === bookId);
@@ -1718,7 +1744,25 @@ function openEditBookModalFromModal(bookId) {
 }
 
 // When the close button in the Book Details Modal is clicked, close the modal.
-document.getElementById('bookDetailsClose').addEventListener('click', closeBookDetailsModal);
+document.getElementById('closeBookDetails').addEventListener('click', closeBookDetailsModal);
+
+document.getElementById('closeBookDetails').addEventListener('click', closeBookDetailsModal);
+
+// Also, to allow closing when clicking outside the modal content:
+window.addEventListener('click', (e) => {
+  const modal = document.getElementById('bookDetailsModal');
+  if (modal.classList.contains('active') && e.target === modal) {
+    closeBookDetailsModal();
+  }
+});
+
+// And closing via the Escape key:
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeBookDetailsModal();
+  }
+});
+
 
 window.openStartReadingModal = openStartReadingModal;
 window.openFinishReadingModal = openFinishReadingModal;

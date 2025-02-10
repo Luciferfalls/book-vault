@@ -368,6 +368,7 @@ button:hover {
     flex-direction: column;
     justify-content: space-between; /* Space out items vertically */
     gap: 15px; /* Add space between items */
+    width: auto;
 }
 
 .book-details p {
@@ -405,7 +406,24 @@ button:hover {
   #bookDetailsModal.active {
     display: flex;
 }
-  
+
+.modal-book-info {
+    width: auto;
+    min-width: 200px;
+    display: flex;              /* Makes the container a flex container */
+    flex-direction: column;     /* Stacks children vertically */
+    align-items: stretch;        /* Centers children horizontally */
+    justify-content: center;    /* Centers children vertically */
+    text-align: center;         /* Ensures that text inside the children is centered */
+    /* Optionally, add a fixed width or padding if needed */
+    margin: 0 auto;             /* Centers the container itself if its width is less than 100% */
+}
+
+.modal-book-info .detail-box {
+    width: 100%;
+    box-sizing: border-box;  /* Ensures that any padding or border is included in the width */
+}
+
 /* Modal content container */
   .book-details-modal {
     background: #1f3b73;
@@ -446,7 +464,12 @@ button:hover {
     transform: scale(1.05);
     box-shadow: 0 6px 12px rgba(255, 0, 0, 1);
 }
-  
+
+.book-cover-img {
+    padding-top: 5px;
+    margin-bottom: -30px;
+}
+
 /* Style the book info container */
   .book-info-container {
     margin-top: 20px;
