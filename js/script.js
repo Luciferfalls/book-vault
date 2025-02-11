@@ -579,11 +579,13 @@ function displayBooks() {
                 </div>
                 </div>
                 <div class="info-container">
-                <h3>${book.title}</h3>
-                <p>${book.author}</p>
-                <p>${book.year}</p>
-                <p>${book.pages} pages</p>
-                </div>
+                    <div class="info-wrapper">
+                        <h3>${book.title}</h3>
+                        <p>${book.author}</p>
+                        <p>${book.year}</p>
+                        <p>${book.pages} pages</p>
+                    </div>
+                    </div>
             </div>
         `;
 
@@ -731,15 +733,17 @@ function displayBooks() {
             </div>
             </div>
             <div class="info-container">
-            <h3>${book.title}</h3>
-            <p>${book.author}</p>
-            <p>${book.year}</p>
-            <p>${book.pages} pages</p>
-            ${book.tbr ? '' : `<p><strong>Start Date:</strong> ${formatDate(book.startDate)}</p>`}
-            ${book.finished ? `<p><strong>End Date:</strong> ${formatDate(book.endDate)}</p>` : ''}
-            ${book.finished && book.pagesPerHour ? `<p><strong>Pages per Hour:</strong> ${book.pagesPerHour}</p>` : ''}
-            ${book.finished && book.timeToRead ? `<p><strong>Total Reading Time:</strong> ${formatReadingTime(book.timeToRead)}</p>` : ''}
-            </div>
+                <div class="info-wrapper">
+                    <h3>${book.title}</h3>
+                    <p>${book.author}</p>
+                    <p>${book.year}</p>
+                    <p>${book.pages} pages</p>
+                    ${book.tbr ? '' : `<p><strong>Start Date:</strong> ${formatDate(book.startDate)}</p>`}
+                    ${book.finished ? `<p><strong>End Date:</strong> ${formatDate(book.endDate)}</p>` : ''}
+                    ${book.finished && book.pagesPerHour ? `<p><strong>Pages per Hour:</strong> ${book.pagesPerHour}</p>` : ''}
+                    ${book.finished && book.timeToRead ? `<p><strong>Total Reading Time:</strong> ${formatReadingTime(book.timeToRead)}</p>` : ''}
+                </div>
+                </div>
         </div>
         `;
 
@@ -1700,7 +1704,7 @@ function openBookDetailsModal(book) {
   
     // Rebuild the modal content markup:
     content.innerHTML = `
-      <div class="book-details">
+      <div class="info-container">
         <div class="modal-book-cover-container" style="text-align: center;">
           <img src="${book.cover || './images/placeholder.jpeg'}" alt="${book.title} Cover" class="book-cover-img" style="width:250px; height:auto; box-shadow: 0 4px 8px rgba(255,0,0,0.8); transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
         </div>

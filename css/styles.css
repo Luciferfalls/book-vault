@@ -470,21 +470,23 @@ button:hover {
     text-align: center;
     margin-bottom: 10px;
   }
-  .book-cover-container img {
+  
+.book-cover-container img {
     width: 250px;
     height: auto;
     box-shadow: 0 4px 8px rgba(255, 0, 0, 0.8);
     transition: transform 0.2s, box-shadow 0.2s;
     display: inline-block;
-  }
-  .book-cover-container img:hover {
+}
+  
+.book-cover-container img:hover {
     transform: scale(1.05);
     box-shadow: 0 6px 12px rgba(255, 0, 0, 1);
 }
 
 .book-cover-img {
     padding-top: 5px;
-    margin-bottom: -30px;
+    margin-bottom: -5px;
 }
 
 /* Style the book info container */
@@ -1352,7 +1354,21 @@ margin: 2px 0;
   display: block;
   width: 100%;
 }
+
+/* The wrapper will shrink to fit its content (the title should be the widest) */
+.info-wrapper {
+    display: block;
+    width: -moz-fit-content;    /* For Firefox */
+    width: -webkit-fit-content; /* For Chrome/Safari */
+    width: fit-content;         /* Standard */
+}
   
+/* Force each child element to take 100% of the wrapper’s width */
+.info-wrapper > * {
+    display: block;
+    width: 100%;
+}
+
 /* Mobile override: stack the cover and info vertically */
 @media (max-width: 767px) {
     .book-entry-split {
@@ -1363,4 +1379,3 @@ margin: 2px 0;
       text-align: center;
     }
 }
-  
