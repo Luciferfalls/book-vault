@@ -1704,22 +1704,24 @@ function openBookDetailsModal(book) {
   
     // Rebuild the modal content markup:
     content.innerHTML = `
-      <div class="info-container">
-        <div class="modal-book-cover-container" style="text-align: center;">
-          <img src="${book.cover || './images/placeholder.jpeg'}" alt="${book.title} Cover" class="book-cover-img" style="width:250px; height:auto; box-shadow: 0 4px 8px rgba(255,0,0,0.8); transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+        <div class="info-container">
+            <div class="modal-book-cover-container" style="text-align: center;">
+            <img src="${book.cover || './images/placeholder.jpeg'}" alt="${book.title} Cover" class="book-cover-img">
+            </div>
+            <div class="modal-book-info" style="text-align: center; margin-top: 15px;">
+            <div class="info-wrapper">
+                <h3>${book.title}</h3>
+                <p>${book.author}</p>
+                <p>${book.year}</p>
+                <p>${book.pages} pages</p>
+                ${extraDetails}
+            </div>
+            </div>
+            <div class="modal-buttons" style="text-align: center; margin-top: 20px;">
+            ${buttonsHTML}
+            </div>
         </div>
-        <div class="modal-book-info" style="text-align: center; margin-top: 15px;">
-          <h3>${book.title}</h3>
-          <p>${book.author}</p>
-          <p>${book.year}</p>
-          <p>${book.pages} pages</p>
-          ${extraDetails}
-        </div>
-        <div class="modal-buttons" style="text-align: center; margin-top: 20px;">
-          ${buttonsHTML}
-        </div>
-      </div>
-    `;
+        `;
     
     // --- Build the modal buttons dynamically ---
     // (Assumes that your modal now contains a container with the class "modal-buttons")

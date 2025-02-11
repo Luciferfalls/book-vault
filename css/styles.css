@@ -487,6 +487,10 @@ button:hover {
 .book-cover-img {
     padding-top: 5px;
     margin-bottom: -5px;
+    width: 250px;
+    height: auto;
+    box-shadow: 0 4px 8px rgba(255,0,0,0.8);
+    transition: transform 0.3s ease;
 }
 
 /* Style the book info container */
@@ -1355,15 +1359,14 @@ margin: 2px 0;
   width: 100%;
 }
 
-/* The wrapper will shrink to fit its content (the title should be the widest) */
+/* New rules to force the info-wrapper to size to its content */
 .info-wrapper {
-    display: block;
+    display: inline-block;
     width: -moz-fit-content;    /* For Firefox */
     width: -webkit-fit-content; /* For Chrome/Safari */
     width: fit-content;         /* Standard */
+    text-align: left;
 }
-  
-/* Force each child element to take 100% of the wrapper’s width */
 .info-wrapper > * {
     display: block;
     width: 100%;
@@ -1378,4 +1381,34 @@ margin: 2px 0;
     .info-container {
       text-align: center;
     }
+}
+
+/* Force any button directly inside .info-container to display as a block-level element */
+.info-container > button {
+    display: block;
+    margin-top: 10px;
+    width: 100%;
+  }
+ 
+/* Override the .info-container styling for the Book Details Modal */
+#bookDetailsModal.info-container {
+    width: 100% !important;
+    text-align: center;
+  }
+  
+  /* Also center the inner wrapper in the modal */
+  #bookDetailsModal .info-wrapper {
+    margin: 0 auto;
+  }
+  
+/* Force the title and paragraph elements inside the modal to have full width */
+#bookDetailsModal .info-wrapper h3,
+#bookDetailsModal .info-wrapper p {
+  width: 100% !important;
+}
+
+/* Force all detail elements in the main page’s info-wrapper to be the same full width */
+.info-wrapper h3,
+.info-wrapper p {
+  width: 100% !important;
 }
