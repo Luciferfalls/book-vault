@@ -686,7 +686,7 @@ function displayBooks() {
             updateAppState();
         });
         const bookDetailsDiv = bookElement.querySelector('.info-container');
-        bookDetailsDiv.prepend(pinButton);
+        bookElement.prepend(pinButton);
 
         // ----- Start Reading Button for TBR Books -----
         const startReadingBtn = document.createElement('button');

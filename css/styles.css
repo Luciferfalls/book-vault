@@ -1089,10 +1089,18 @@ form .form-group input {
     position: absolute;
     top: 5px;
     left: 5px;
-    background: transparent;
-    border: none;
+    background: rgba(0, 0, 0, 0.75); /* a semi-transparent dark background */
+    border: 1px solid #2b00ff;         /* white border for contrast */
+    border-radius: 50%;             /* make it circular */
+    padding: 2px;                   /* add some internal spacing */
     font-size: 16px;
+    color: #fff;                    /* ensure the icon/text is white */
     cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* subtle shadow for extra contrast */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
 }
 
 .pin-btn.pinned {
