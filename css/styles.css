@@ -1541,3 +1541,21 @@ box-sizing: border-box;
     display: block;
     margin: 20px auto 0; /* 20px top margin to create space from the button above, auto on left/right centers it, 0 bottom */
 }  
+
+.book-section.grid-view .book-entry {
+    background-image: none !important;
+}
+
+.book-entry.list-view {
+    background-size: calc(100% - 50px) auto; /* reduce width by 50px */
+    background-position: right center;       /* align the image to the right */
+}  
+
+/* CSS for changing size of background image
+
+.book-entry {
+    background-size: calc(100% - 175px) auto !important;
+    background-position: right center !important;
+} 
+
+*/
