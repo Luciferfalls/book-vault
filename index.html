@@ -72,93 +72,96 @@
 <div id="addBookModal" class="modal">
     <div class="modal-content">
         <button class="close-modal">&times;</button>
+        <div id="modeSelector" style="text-align: center; margin-bottom: 15px;">
+            <button id="searchOnlineModeBtn" class="mode-btn" style="padding: 10px 20px;">Search Online</button>
+            <button id="manualEntryModeBtn" class="mode-btn active" style="padding: 10px 20px; margin-right: 5px;">Manual Entry</button>
+        </div>        
         <form id="addBookForm">
             <h2 id="modalTitle">Add a Book</h2>
             
             <div class="book-type-toggle">
-                <button data-type="tbr">To Be Read</button>
+                <button data-type="tbr" id="tbrButton">
+                    <span class="desktop-text">To Be Read</span>
+                    <span class="mobile-text">TBR</span>
+                </button>                  
                 <button data-type="reading">Currently Reading</button>
-                <button data-type="finished">Finished Book</button>
+                <button data-type="finished">Finished</button>
             </div>
                       
 
             <!-- Common fields -->
-           <!-- Search Input Fields: Always Visible -->
-            <div id="search-inputs" class="search-inputs">
-                <div class="search-form-group">
-                    <input id="searchTitle" placeholder="Search by Title">
-                </div>
-                <div class="search-form-group">
-                    <input id="searchAuthor" placeholder="Search by Author">
-                </div>
-            </div>
-
-            <!-- ISBN Search -->
-            <div id="isbn-search-input-container" class="search-inputs">
-                <input id="searchISBN" placeholder="Search by ISBN">
-            </div>
-            <ul id="isbnSearchResults" class="search-results hidden"></ul>
-
-            <!-- Search Results: Separate and Initially Hidden -->
-            <ul id="titleSearchResults" class="search-results hidden"></ul>
-            <ul id="authorSearchResults" class="search-results hidden"></ul>
-
+            <div id="searchOnlineContainer">
+                <!-- Search Input Fields -->
+                <div class="search-inputs">
+                    <div class="search-form-group">
+                      <input id="searchTitle" placeholder="Search by Title">
+                      <ul id="titleSearchResults" class="search-results hidden"></ul>
+                    </div>
+                  </div>
+                  <div class="search-inputs">
+                    <div class="search-form-group">
+                      <input id="searchAuthor" placeholder="Search by Author">
+                      <ul id="authorSearchResults" class="search-results hidden"></ul>
+                    </div>
+                  </div>
+                  <div class="search-inputs">
+                    <div class="search-form-group">
+                      <input id="searchISBN" placeholder="Search by ISBN">
+                      <ul id="isbnSearchResults" class="search-results hidden"></ul>
+                    </div>
+                </div>                  
+                <ul id="isbnSearchResults" class="search-results hidden"></ul>
+                <ul id="titleSearchResults" class="search-results hidden"></ul>
+                <ul id="authorSearchResults" class="search-results hidden"></ul>
+            </div>              
                     
-            <div class="form-group">
-                <label for="bookTitle">Title:</label>
-                <input id="bookTitle" type="text" required />
-            </div>
-            <div class="form-group">
-                <label for="bookAuthor">Author:</label>
-                <input id="bookAuthor" type="text" required />
-            </div>
-            <div class="form-group">
-                <label for="publicationYear">Publication Year:</label>
-                <input id="publicationYear" type="number" required />
-            </div>
-            <div class="form-group">
-                <label for="bookPages">Pages:</label>
-                <input id="bookPages" type="number" required />
-            </div>
-            <div class="form-group">
-                <label for="addBookCover">Cover URL:</label>
-                <input type="text" id="addBookCover" placeholder="Cover URL">
-                <img id="coverPreview" src="./images/placeholder.jpeg" alt="Cover Preview" style="width: 100px; height: auto; border-radius: 5px; margin-top: 10px;" />
-                <button id="searchCoverButton" type="button">Search for Cover</button>
-            </div>
-            <div id="coverSearchModal" class="modal">
-                <div class="modal-content">
-                    <h2>Search Cover</h2>
-                    <div id="coverSearchResults"></div>
-                    <button class="close-modal">Close</button>
-                </div>
-            </div>
-
-            <!-- Fields for "Currently Reading" and "Finished Books" -->
-            <div id="readingFields" class="hidden">
+            <div id="manualEntryContainer" style="display:none;">
                 <div class="form-group">
-                    <label for="startDate">Start Date:</label>
-                    <input id="startDate" type="date" />
-                </div>
-            </div>
-
-            <!-- Fields for "Finished Books" -->
-            <div id="finishedFields" class="hidden">
-                <div class="form-group">
-                    <label for="endDate">End Date:</label>
-                    <input id="endDate" type="date" />
+                    <label for="bookTitle">Title:</label>
+                    <input id="bookTitle" type="text" required />
                 </div>
                 <div class="form-group">
-                    <label for="pagesPerHour">Pages Per Hour:</label>
-                    <input id="pagesPerHour" type="number" step="0.1" />
+                    <label for="bookAuthor">Author:</label>
+                    <input id="bookAuthor" type="text" required />
                 </div>
                 <div class="form-group">
-                    <label for="readingTime">Total Reading Time (HH:MM):</label>
-                    <input id="readingTime" type="text" placeholder="00:00" />
+                    <label for="publicationYear">Publication Year:</label>
+                    <input id="publicationYear" type="number" required />
                 </div>
-            </div>
-
-            <button type="submit">Add Book</button>
+                <div class="form-group">
+                    <label for="bookPages">Pages:</label>
+                    <input id="bookPages" type="number" required />
+                </div>
+                <div class="form-group">
+                    <label for="addBookCover">Cover URL:</label>
+                    <input type="text" id="addBookCover" placeholder="Cover URL">
+                    <img id="coverPreview" src="./images/placeholder.jpeg" alt="Cover Preview" style="width: 100px; height: auto; border-radius: 5px; margin-top: 10px;" />
+                    <button id="searchCoverButton" type="button">Search for Cover</button>
+                </div>
+                <!-- Include the hidden cover search modal as you already have it -->
+                <!-- Fields for Currently Reading and Finished Books -->
+                <div id="readingFields" class="hidden">
+                    <div class="form-group">
+                        <label for="startDate">Start Date:</label>
+                        <input id="startDate" type="date" />
+                    </div>
+                </div>
+                <div id="finishedFields" class="hidden">
+                    <div class="form-group">
+                        <label for="endDate">End Date:</label>
+                        <input id="endDate" type="date" />
+                    </div>
+                    <div class="form-group">
+                        <label for="pagesPerHour">Pages Per Hour:</label>
+                        <input id="pagesPerHour" type="number" step="0.1" />
+                    </div>
+                    <div class="form-group">
+                        <label for="readingTime">Total Reading Time (HH:MM):</label>
+                        <input id="readingTime" type="text" placeholder="00:00" />
+                    </div>
+                </div>
+                <button type="submit">Add Book</button>
+              </div>              
         </form>
     </div>
 </div>
@@ -183,16 +186,19 @@
         <span class="close-modal">&times;</span>
         <h2 id="finishReadingModalTitle">Finish Reading</h2>
         <form>
+            <!-- New start date field -->
+            <label for="finishStartDate">Start Date:</label>
+            <input type="date" id="finishStartDate" required>
             <label for="finishReadingDate">End Date:</label>
             <input type="date" id="finishReadingDate" required>
             <label for="pagesPerHour">Pages Per Hour:</label>
             <input type="number" id="pagesPerHour" step="0.1">
             <label for="timeToRead">Total Reading Time (HH:MM):</label>
             <input type="text" id="timeToRead">
-            <button type="submit">Mark as Finished</button>
+            <button type="submit">Add Book</button>
         </form>
     </div>
-</div>
+</div>  
 
 <!--Cover Search Modal-->
 <div id="coverSearchModal" class="modal hidden">
@@ -297,6 +303,60 @@
       </div>
     </div>
 </div>      
+
+<!-- New Finished Book Extra Info Modal -->
+<div id="newFinishedModal" class="modal hidden">
+    <div class="modal-content">
+      <button class="close-modal">&times;</button>
+      <h2>Finish Book</h2>
+      <form id="newFinishedForm">
+        <!-- Extra field: Start Date (since search may not supply this) -->
+        <div class="form-group">
+          <label for="newFinishStartDate">Start Date:</label>
+          <input type="date" id="newFinishStartDate" required>
+        </div>
+        <!-- End Date -->
+        <div class="form-group">
+          <label for="newFinishEndDate">End Date:</label>
+          <input type="date" id="newFinishEndDate" required>
+        </div>
+        <!-- Optional fields -->
+        <div class="form-group">
+          <label for="newPagesPerHour">Pages Per Hour:</label>
+          <input type="number" id="newPagesPerHour" step="0.1">
+        </div>
+        <div class="form-group">
+          <label for="newTimeToRead">Total Reading Time (HH:MM):</label>
+          <input type="text" id="newTimeToRead" placeholder="00:00">
+        </div>
+        <button type="submit">Add Book</button>
+      </form>
+    </div>
+</div>  
+
+<!-- New Currently Reading Modal from Search -->
+<div id="readingFromSearchModal" class="modal hidden">
+    <div class="modal-content" style="max-width:400px; text-align:center; position:relative;">
+      <button class="close-modal" style="position:absolute; top:5px; right:5px;">&times;</button>
+      <h2>Select Start Date</h2>
+      <div id="readingFromSearchContent">
+        <!-- This container will be filled with the auto‑filled book info -->
+        <div class="book-info-card hidden" style="margin-bottom:15px;">
+          <!-- For example, show the cover and key details -->
+          <img id="rfsCover" src="./images/placeholder.jpeg" alt="Cover" style="width:100px; height:auto; margin-bottom:10px;">
+          <h3 id="rfsTitle"></h3>
+          <p id="rfsAuthor"></p>
+          <p id="rfsYear"></p>
+          <p id="rfsPages"></p>
+        </div>
+        <div class="form-group">
+          <label for="rfsStartDate"></label>
+          <input type="date" id="rfsStartDate" required>
+        </div>
+        <button id="rfsAddBookBtn" style="padding:8px 16px; margin-top:10px;">Add Book</button>
+      </div>
+    </div>
+</div>  
 
 </body>
 </html>

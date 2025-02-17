@@ -96,6 +96,7 @@ form {
     justify-content: center; /* Centers the contents vertically */
     position: relative; /* Ensures positioned elements like search results are relative to the form-group */
     width: 100%;
+    margin-top: 15px;
 }
 
 form .form-group label {
@@ -136,6 +137,12 @@ form button:hover {
     justify-content: center; /* Centers the contents vertically */
     position: relative; /* Ensures positioned elements like search results are relative to the form-group */
     width: 100%;
+}
+
+/* Position the search results absolutely relative to its container */
+.search-form-group .search-results {
+    position: absolute;
+    width: fit-content;
 }
 
 form .search-form-group label {
@@ -703,7 +710,7 @@ button, .add-book-link {
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(255, 0, 0, 0.8); /* Optional glowing border */
-    width: 40%;
+    width: 95%;
     max-width: 600px;
     min-width: 300px;
     max-height: calc(100vh - 60px); /* Limit modal height */
@@ -972,6 +979,7 @@ form .form-group input {
     border-radius: 5px;
     cursor: pointer;
     transition: background 0.3s ease;
+    margin-bottom: -15px;
 }
 
 .book-type-toggle button.active {
@@ -980,6 +988,21 @@ form .form-group input {
 
 .book-type-toggle button:hover {
     background-color: #4b8ed7;
+}
+
+@media (max-width: 600px) {
+    #addBookModal .book-type-toggle {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: -5px; /* Adjust spacing as needed */
+      text-align: center;
+}
+    
+/* Ensure the buttons themselves are inline */
+#addBookModal .book-type-toggle button {
+    display: inline-block;
+}
 }
 
 #backgroundEditorModal img {
@@ -1142,6 +1165,14 @@ margin: 2px 0;
     width: 100%;
     margin-bottom: 5px;
 }
+
+.search-inputs .search-form-group {
+    margin-bottom: 10px;
+}
+
+.search-inputs .search-form-group:first-child {
+    margin-bottom: -15px; /* Adjust this value as needed */
+}  
 
 #globalControlBar {
     position: fixed;
@@ -1420,3 +1451,80 @@ margin: 2px 0;
 .info-wrapper p {
   width: 100% !important;
 }
+
+/* New CSS for Add Book Modal Mode Selector and Dynamic Content */
+
+.mode-selector {
+text-align: center;
+margin-bottom: -20px;
+}
+
+.mode-selector .mode-btn {
+padding: 10px 20px;
+margin: 0 5px;
+font-size: 16px;
+background-color: #3a6ea5;
+color: white;
+border: none;
+border-radius: 5px;
+cursor: pointer;
+transition: background 0.3s ease;
+}
+
+.mode-selector .mode-btn.active {
+background-color: #4caf50;
+}
+
+.mode-selector .mode-btn:hover {
+background-color: #4b8ed7;
+}
+
+.dynamic-content {
+/* Ensure the content area takes appropriate width */
+padding: 10px;
+/* For mobile, you might want full width; for desktop, you can limit it: */
+width: 100%;
+box-sizing: border-box;
+}  
+
+@media (max-width: 600px) {
+    #modeSelector {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      gap: 10px; /* Adjust spacing as needed */
+    }
+}
+
+/* Default (desktop) */
+.mobile-text {
+    display: none;
+}
+  
+/* Mobile: when screen width is 600px or less */
+@media (max-width: 600px) {
+    .desktop-text {
+      display: none;
+    }
+    .mobile-text {
+      display: inline;
+    }
+}
+
+#addBookModal .search-results {
+    width: calc(100% + 50px);
+    margin-left: -35px; /* half of the extra width to center it */
+}  
+
+#addBookModal .modal-content {
+    height: 550px; /* or any value that suits your design */
+    overflow-y: auto;
+}  
+
+.modal-content .close-modal {
+    position: absolute;
+    top: 10px;    /* adjust as needed */
+    right: 10px;  /* adjust as needed */
+    z-index: 10;  /* ensure it's on top of other content */
+    margin-right: -10px;
+}  

@@ -25,6 +25,8 @@ let yearlyGoal = 50;  // Default Goal
 let booksRead = 0;
 let allBooks = JSON.parse(localStorage.getItem('books')) || [];
 
+let tempBookFromSearch = null;
+
 // Retrieve the sort order from localStorage, defaulting to 'desc'
 let finishedSortOrder = localStorage.getItem('finishedSortOrder') || 'desc';
 
@@ -40,6 +42,35 @@ toggleViewBtn.addEventListener('click', () => {
     
     attachGridViewListeners();
 });
+
+const manualEntryModeBtn = document.getElementById('manualEntryModeBtn');
+const searchOnlineModeBtn = document.getElementById('searchOnlineModeBtn');
+const manualEntryContainer = document.getElementById('manualEntryContainer');
+const searchOnlineContainer = document.getElementById('searchOnlineContainer');
+
+if (manualEntryModeBtn && searchOnlineModeBtn && manualEntryContainer && searchOnlineContainer) {
+    // When Manual Entry is clicked:
+    manualEntryModeBtn.addEventListener('click', () => {
+        manualEntryModeBtn.classList.add('active');
+        searchOnlineModeBtn.classList.remove('active');
+        manualEntryContainer.style.display = 'block';
+        searchOnlineContainer.style.display = 'none';
+    });
+    // When Search Online is clicked:
+    searchOnlineModeBtn.addEventListener('click', () => {
+        searchOnlineModeBtn.classList.add('active');
+        manualEntryModeBtn.classList.remove('active');
+        searchOnlineContainer.style.display = 'block';
+        manualEntryContainer.style.display = 'none';
+    });
+} else {
+    console.warn("Mode switch elements not found; please check your modal markup.");
+}
+
+let addBookMode = 'search'; // default mode
+manualEntryModeBtn.addEventListener('click', () => { addBookMode = 'manual'; });
+searchOnlineModeBtn.addEventListener('click', () => { addBookMode = 'search'; });
+
 
 function debounce(func, delay) {
     let timeoutId;
@@ -117,11 +148,6 @@ function attachGridViewListeners() {
     });
 } 
 
-coverUrlField.addEventListener('input', () => {
-    const url = coverUrlField.value.trim();
-    coverPreview.src = url || './images/placeholder.jpeg';
-});
-
 if (!modal) console.error("Start Reading Modal not found!");
 
 function updateCoverPreview() {
@@ -145,25 +171,43 @@ function closeModal(modal) {
     }
 }
 
-addBookButton.addEventListener('click', () => {
-    if (addBookButton) {
-        addBookButton.addEventListener('click', () => {
-            if (addBookModal) {    
-                addBookModal.style.display = 'flex';
-                addBookModal.classList.add('active');
-    
-                console.log("After:", {
-                    display: addBookModal.style.display,
-                    classList: addBookModal.classList,
-                });
-            } else {
-                console.error("Add Book modal not found.");
+if (addBookButton) {
+    addBookButton.addEventListener('click', () => {
+        // Before opening, remove the card modal if it exists.
+        let existingCard = document.getElementById("bookDetailsCardModal");
+        if (existingCard) {
+            existingCard.parentNode.removeChild(existingCard);
+        }
+        if (addBookModal) {    
+            addBookModal.style.display = 'flex';
+            addBookModal.classList.add('active');
+
+            // Also, reset search fields and hide search results:
+            const searchTitleInput = document.getElementById('searchTitle');
+            const searchTitleResults = document.getElementById('titleSearchResults');
+            if (searchTitleInput) {
+                searchTitleInput.value = "";
             }
-        });
-    } else {
-        console.error("Add Book button not found.");
-    }
-});
+            if (searchTitleResults) {
+                searchTitleResults.innerHTML = "";
+                searchTitleResults.classList.add("hidden");
+            }
+            const searchAuthorInput = document.getElementById('searchAuthor');
+            const searchAuthorResults = document.getElementById('authorSearchResults');
+            if (searchAuthorInput) {
+                searchAuthorInput.value = "";
+            }
+            if (searchAuthorResults) {
+                searchAuthorResults.innerHTML = "";
+                searchAuthorResults.classList.add("hidden");
+            }
+        } else {
+            console.error("Add Book modal not found.");
+        }
+    });
+} else {
+    console.error("Add Book button not found.");
+}
 
 // Add event listeners for closing modals via "X" button
 const closeButtons = document.querySelectorAll('.close-modal');
@@ -371,25 +415,38 @@ function openStartReadingModal(bookId) {
 function handleStartReadingSubmit(e) {
     e.preventDefault();
     const form = e.target;
-    const bookId = form.dataset.bookId;
-    // Get the start date from the input field in the Start Reading Modal
     const startReadingDate = form.querySelector('#startReadingDate').value.trim();
-    
     if (!startReadingDate) {
-        alert("Please enter a start date.");
-        return;
+      alert("Please enter a start date.");
+      return;
     }
-
-    allBooks = allBooks.map(book => {
-        if (book.id === bookId) {
-            return { ...book, tbr: false, startDate: startReadingDate };
-        }
-        return book;
-    });
-
-    updateAppState();
-    closeModal(document.getElementById('startReadingModal'));
-}
+    // Check if there’s a temp book from search.
+    let bookToUpdate;
+    if (form.dataset.tempBook) {
+      bookToUpdate = JSON.parse(form.dataset.tempBook);
+      // Remove the temp storage.
+      delete form.dataset.tempBook;
+    } else {
+      // Fallback: find book in allBooks by form.dataset.bookId (existing behavior).
+      const bookId = form.dataset.bookId;
+      bookToUpdate = allBooks.find(book => book.id === bookId);
+    }
+    if (bookToUpdate) {
+      // Update the book with the selected start date.
+      bookToUpdate.startDate = startReadingDate;
+      // Now add (or update) the book in allBooks.
+      // If the book is not yet in allBooks, push it.
+      if (!allBooks.find(b => b.id === bookToUpdate.id)) {
+        allBooks.push(bookToUpdate);
+      } else {
+        allBooks = allBooks.map(b => b.id === bookToUpdate.id ? bookToUpdate : b);
+      }
+      updateAppState();
+      closeModal(document.getElementById('startReadingModal'));
+      // Clear the temp book.
+      tempBookFromSearch = null;
+    }
+}  
 
 function attachFinishButtonListeners() {
     const finishButtons = document.querySelectorAll('.finish-btn');
@@ -420,106 +477,60 @@ function openFinishReadingModal(bookId) {
 
 function handleFinishReadingSubmit(e) {
     e.preventDefault();
-
     const form = e.target;
-    const bookId = form.dataset.bookId;
-    console.log(`Submitting Finish Reading for bookId: ${bookId}`);
-
-    // Get the end date (required)
+    
+    // Retrieve the start date from the finished modal.
+    const finishStartDate = form.querySelector('#finishStartDate').value.trim();
+    if (!finishStartDate) {
+        alert('Start date is required.');
+        return;
+    }
+    
     const endDate = form.querySelector('#finishReadingDate').value.trim();
     if (!endDate) {
         alert('End date is required.');
         return;
     }
-
-    // Get pages per hour as a string; if nonempty, parse it; otherwise assign null.
-    const pagesPerHourStr = form.querySelector('#pagesPerHour').value.trim();
-    const pagesPerHour = pagesPerHourStr ? parseFloat(pagesPerHourStr) : null;
-
-    // Get time to read as a string; if blank, assign null.
-    const timeToRead = form.querySelector('#timeToRead').value.trim() || null;
-
-    console.log(`End Date: ${endDate}, Pages Per Hour: ${pagesPerHour}, Time to Read: ${timeToRead}`);
-
-    allBooks = allBooks.map(book => {
-        if (book.id === bookId) {
-            const start = new Date(book.startDate);
-            const end = new Date(endDate);
-            return {
-                ...book,
-                endDate,
-                pagesPerHour,
-                timeToRead,
-                totalDays: Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1,
-                finished: true,
-                tbr: false,
-            };
-        }
-        return book;
-    });
-
-    console.log('Updated allBooks array:', allBooks);
-    updateAppState();
-    closeModal(document.getElementById('finishReadingModal'));
-}
-
-
-function handleFinishReadingSubmit(e) {
-    e.preventDefault();
-
-    const form = e.target;
-    const bookId = form.dataset.bookId; // Retrieve the book ID attached to the form
-    console.log(`Submitting Finish Reading for bookId: ${bookId}`);
-
-    // Get the raw input values as strings.
-    const endDate = form.querySelector('#finishReadingDate').value.trim();
+    
     const pagesPerHourStr = form.querySelector('#pagesPerHour').value.trim();
     const timeToReadStr = form.querySelector('#timeToRead').value.trim();
-
-    // Require only the end date.
-    if (!endDate) {
-        alert('End date is required.');
-        return;
-    }
-
-    // For pages per hour, only parse if not empty.
-    let pagesPerHour = null;
-    if (pagesPerHourStr !== "") {
-        pagesPerHour = parseFloat(pagesPerHourStr);
-        if (isNaN(pagesPerHour)) {
-            alert('Pages per hour must be a valid number if provided.');
-            return;
-        }
-    }
-
-    // For time to read, use the value if not empty; otherwise, set to null.
+    const pagesPerHour = pagesPerHourStr ? parseFloat(pagesPerHourStr) : null;
     const timeToRead = timeToReadStr !== "" ? timeToReadStr : null;
-
-    console.log(`End Date: ${endDate}, Pages Per Hour: ${pagesPerHour}, Time to Read: ${timeToRead}`);
-
-    allBooks = allBooks.map(book => {
-        if (book.id === bookId) {
-            const start = new Date(book.startDate);
-            const end = new Date(endDate);
-            const updatedBook = {
-                ...book,
-                endDate,
-                pagesPerHour,
-                timeToRead,
-                totalDays: Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1,
-                finished: true,
-            };
-            console.log('Updated Book:', updatedBook);
-            return updatedBook;
+    
+    // Use the temporary book data if present
+    let tempBook;
+    if (form.dataset.tempBook) {
+        tempBook = JSON.parse(form.dataset.tempBook);
+        delete form.dataset.tempBook; // Clear it after reading
+    } else {
+        // Fallback: find by form.dataset.bookId
+        const bookId = form.dataset.bookId;
+        tempBook = allBooks.find(book => book.id === bookId);
+    }
+    if (tempBook) {
+        // Update the temporary book with the dates and additional info.
+        tempBook.startDate = finishStartDate;
+        tempBook.endDate = endDate;
+        tempBook.pagesPerHour = pagesPerHour;
+        tempBook.timeToRead = timeToRead;
+        const start = new Date(finishStartDate);
+        const end = new Date(endDate);
+        tempBook.totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        // Mark the book as finished.
+        tempBook.finished = true;
+        tempBook.tbr = false;
+        
+        // Now update allBooks: if the book isn’t already there, push it.
+        if (!allBooks.find(b => b.id === tempBook.id)) {
+            allBooks.push(tempBook);
+        } else {
+            allBooks = allBooks.map(b => b.id === tempBook.id ? tempBook : b);
         }
-        return book;
-    });
-
-    console.log('Updated allBooks array:', allBooks);
-
-    updateAppState();
-    closeModal(document.getElementById('finishReadingModal'));
-}
+        updateAppState();
+        closeModal(document.getElementById('finishReadingModal'));
+        tempBookFromSearch = null;
+    }
+} 
 
 function displayBooks() {
     // Clear all sections
@@ -1159,15 +1170,6 @@ addBookForm.addEventListener('submit', (e) => {
     addBookForm.reset();
 });
 
-if (addBookForm) {
-    addBookForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        // Form logic here
-    });
-} else {
-    console.warn("Element with id 'addBookForm' not found.");
-}
-
 async function searchBooks(query, searchType = "intitle") {
     const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${searchType}:${encodeURIComponent(query)}`;
     try {
@@ -1260,11 +1262,12 @@ document.addEventListener('click', (e) => {
     const listItem = e.target.closest('#titleSearchResults li, #authorSearchResults li');
     if (listItem) {
         const bookDetails = JSON.parse(listItem.dataset.book);
-        populateToBeReadFields(bookDetails); // Adjust this to the appropriate populate function
-        listItem.closest('.results-container').classList.add('hidden');
-        resultsContainer.classList.add("hidden");
+        renderBookDetailsCard(bookDetails);
+        if (listItem.parentElement) {
+            listItem.parentElement.classList.add("hidden");
+        }
     }
-});
+});  
 
 function setupSearchHandler(inputId, resultsId, populateFields, searchType = "intitle") {
     const input = document.getElementById(inputId);
@@ -1397,45 +1400,45 @@ document.getElementById("coverSearchModal").addEventListener("click", (e) => {
 });
 
 document.getElementById("searchCoverButton").addEventListener("click", () => {
-    const bookTitle = document.getElementById("addBookTitle").value.trim();
+    const bookTitle = document.getElementById("bookTitle").value.trim();
     if (!bookTitle) {
         alert("Please enter a book title to search for a cover.");
         return;
     }
-
+    
     const coverSearchModal = document.getElementById("coverSearchModal");
     const coverSearchResults = document.getElementById("coverSearchResults");
-
+    
     coverSearchResults.innerHTML = `<p>Loading results for "${bookTitle}"...</p>`;
     coverSearchModal.style.display = "flex";
     coverSearchModal.classList.add("active");
-
+    
     // Fetch cover images
     searchCovers(bookTitle)
-        .then((covers) => {
-            coverSearchResults.innerHTML = "";
-            covers.forEach((cover) => {
-                const img = document.createElement("img");
-                img.src = cover;
-                img.alt = "Cover Image";
-                img.className = "cover-search-result";
-                img.style.cursor = "pointer";
-
-                img.addEventListener("click", () => {
-                    coverUrlField.value = cover;
-                    coverPreview.src = cover;
-                    coverSearchModal.style.display = "none";
-                    coverSearchModal.classList.remove("active");
-                });
-
-                coverSearchResults.appendChild(img);
-            });
-        })
-        .catch((error) => {
-            console.error("Error fetching cover images:", error);
-            coverSearchResults.innerHTML = `<p>Error fetching cover images. Please try again.</p>`;
+      .then((covers) => {
+        coverSearchResults.innerHTML = "";
+        covers.forEach((cover) => {
+          const img = document.createElement("img");
+          img.src = cover;
+          img.alt = "Cover Image";
+          img.className = "cover-search-result";
+          img.style.cursor = "pointer";
+    
+          img.addEventListener("click", () => {
+            coverUrlField.value = cover;
+            coverPreview.src = cover;
+            coverSearchModal.style.display = "none";
+            coverSearchModal.classList.remove("active");
+          });
+    
+          coverSearchResults.appendChild(img);
         });
-});
+      })
+      .catch((error) => {
+        console.error("Error fetching cover images:", error);
+        coverSearchResults.innerHTML = `<p>Error fetching cover images. Please try again.</p>`;
+      });
+});  
 
 // Close the cover search modal
 document.querySelector("#coverSearchModal .close-modal").addEventListener("click", () => {
@@ -1484,9 +1487,14 @@ bookTypeToggleButtons.forEach((button) => {
         document.getElementById('readingFields').classList.toggle('hidden', bookType !== 'reading' && bookType !== 'finished');
         document.getElementById('finishedFields').classList.toggle('hidden', bookType !== 'finished');
 
-        // Update heading based on selection
+        // Update heading based on selection.
+        // For TBR, force the header text to "Add To Be Read"
         const modalHeading = document.querySelector('.modal-content h2');
-        modalHeading.textContent = `Add ${button.textContent}`;
+        if (button.dataset.type === 'tbr') {
+            modalHeading.textContent = "Add To Be Read";
+        } else {
+            modalHeading.textContent = `Add ${button.textContent}`;
+        }
     });
 });
 
@@ -1807,11 +1815,6 @@ function openEditBookModalFromModal(bookId) {
     closeBookDetailsModal();
 }
 
-// When the close button in the Book Details Modal is clicked, close the modal.
-document.getElementById('closeBookDetails').addEventListener('click', closeBookDetailsModal);
-
-document.getElementById('closeBookDetails').addEventListener('click', closeBookDetailsModal);
-
 // Also, to allow closing when clicking outside the modal content:
 window.addEventListener('click', (e) => {
   const modal = document.getElementById('bookDetailsModal');
@@ -1826,8 +1829,6 @@ window.addEventListener('keydown', (e) => {
     closeBookDetailsModal();
   }
 });
-
-// Add these two functions in your scripts.js (place them near the bottom of your DOMContentLoaded block):
 
 function openStartReadingModalFromModal(bookId) {
     // Close the Book Details Modal first.
@@ -1849,5 +1850,255 @@ window.openFinishReadingModalFromModal = openFinishReadingModalFromModal;
 
 window.openEditBookModalFromModal = openEditBookModalFromModal;  // if not already global
 window.deleteBook = deleteBook;
+
+function renderBookDetailsCard(bookDetails) {
+    // Create a modal element for the details card if it doesn't already exist.
+    let cardModal = document.getElementById("bookDetailsCardModal");
+    if (!cardModal) {
+      cardModal = document.createElement("div");
+      cardModal.id = "bookDetailsCardModal";
+      cardModal.classList.add("modal");
+      // Basic styles for centering – you can adjust these in your CSS.
+      cardModal.style.display = "flex";
+      cardModal.style.alignItems = "center";
+      cardModal.style.justifyContent = "center";
+      document.body.appendChild(cardModal);
+    }
+    
+    // Fill the modal with a card containing the book details and two buttons.
+    cardModal.innerHTML = `
+      <div class="modal-content" style="max-width:400px; text-align:center; position:relative;">
+        <button class="close-modal" style="position:absolute; top:5px; right:5px;">&times;</button>
+        <div class="book-details-card">
+          <img src="${bookDetails.imageLinks ? bookDetails.imageLinks.thumbnail : './images/placeholder.jpeg'}" 
+               alt="${bookDetails.title} Cover" style="width:100px; height:auto; margin:0 auto 10px;">
+          <h3>${bookDetails.title}</h3>
+          <p>${bookDetails.authors ? bookDetails.authors.join(", ") : "Unknown Author"}</p>
+          <p>${bookDetails.publishedDate ? bookDetails.publishedDate.split("-")[0] : "N/A"}</p>
+          <div style="margin-top:15px;">
+            <button id="addBookFromCardBtn" style="padding:8px 16px; margin-right:5px;">Add Book</button>
+            <button id="editBookFromCardBtn" style="padding:8px 16px;">Edit</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Attach listener to the close button.
+    cardModal.querySelector(".close-modal").addEventListener("click", () => {
+      cardModal.style.display = "none";
+    });
+    
+    const addBtn = cardModal.querySelector("#addBookFromCardBtn");
+    if (addBtn) {
+                // When "Add Book" is clicked:
+    addBtn.addEventListener("click", () => {
+        if (selectedBookType === "tbr") {
+            // For TBR, add immediately.
+            addBookFromSearch(bookDetails);
+            cardModal.style.display = "none";
+        } else if (selectedBookType === "reading") {
+            // For Currently Reading:
+            // Store the search result temporarily.
+            tempBookFromSearch = {
+              ...bookDetails,
+              id: Date.now().toString(),
+              tbr: false,
+              finished: false,
+              cover: (bookDetails.imageLinks && bookDetails.imageLinks.thumbnail)
+                          ? bookDetails.imageLinks.thumbnail
+                          : './images/placeholder.jpeg'
+            };
+            closeModal(addBookModal);
+            // Open the new modal for currently reading.
+            openReadingFromSearchModal();
+            cardModal.style.display = "none";
+        } else if (selectedBookType === "finished") {
+            // For Finished Books, open the new finished modal.
+            tempBookFromSearch = {
+                ...bookDetails,
+                id: Date.now().toString(),
+                tbr: false,
+                finished: true,
+                cover: (bookDetails.imageLinks && bookDetails.imageLinks.thumbnail)
+                          ? bookDetails.imageLinks.thumbnail
+                          : './images/placeholder.jpeg'
+            };
+            openNewFinishedModal();
+            cardModal.style.display = "none";
+        }
+    });        
+    } else {
+    console.error("Add Book button in card not found.");
+    }
+
+    
+    // When "Edit" is clicked, populate the manual entry fields and close the card.
+    cardModal.querySelector("#editBookFromCardBtn").addEventListener("click", () => {
+        // Simulate clicking the existing Manual Entry button.
+        const manualBtn = document.getElementById('manualEntryModeBtn');
+        if (manualBtn) {
+          manualBtn.click();
+        } else {
+          console.warn("Manual Entry button not found.");
+        }
+        // Close the card modal.
+        cardModal.style.display = "none";
+      });      
+}    
+
+function addBookFromSearch(bookDetails) {
+    // Build a new book object based on the search result
+    const newBook = {
+      id: Date.now().toString(),
+      title: bookDetails.title || "No Title",
+      author: bookDetails.authors ? bookDetails.authors.join(", ") : "Unknown Author",
+      year: bookDetails.publishedDate ? parseInt(bookDetails.publishedDate.split("-")[0], 10) : 0,
+      pages: bookDetails.pageCount ? parseInt(bookDetails.pageCount, 10) : 0,
+      cover: (bookDetails.imageLinks && bookDetails.imageLinks.thumbnail) 
+               ? bookDetails.imageLinks.thumbnail 
+               : './images/placeholder.jpeg',
+      startDate: null,
+      tbr: true,
+      finished: false,
+      endDate: null,
+      pagesPerHour: null,
+      timeToRead: null,
+      backgroundMode: 'cover',
+      backgroundPosition: 'center',
+      currentPage: undefined
+    };
+  
+    // Add the new book and update the app state
+    allBooks.push(newBook);
+    updateAppState();
+  
+    // Close the add-book modal now:
+    closeModal(addBookModal);
+  
+    // (Optionally, reset the addBookForm here if needed)
+    addBookForm.reset();
+}  
+
+function openNewFinishedModal() {
+    const newModal = document.getElementById('newFinishedModal');
+    if (!newModal) {
+        console.error("New Finished Modal not found.");
+        return;
+    }
+    // Set up the form so that when submitted, it copies its fields into the manual entry fields,
+    // then simulates a click on the addBookForm submit button.
+    const newForm = newModal.querySelector('form');
+    newForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        // Get the extra info from the new finished modal.
+        const startDate = document.getElementById('newFinishStartDate').value.trim();
+        const endDate = document.getElementById('newFinishEndDate').value.trim();
+        const pagesPerHourStr = document.getElementById('newPagesPerHour').value.trim();
+        const timeToReadStr = document.getElementById('newTimeToRead').value.trim();
+        if (!startDate) {
+            alert("Start date is required.");
+            return;
+        }
+        if (!endDate) {
+            alert("End date is required.");
+            return;
+        }
+        const pagesPerHour = pagesPerHourStr ? parseFloat(pagesPerHourStr) : null;
+        const timeToRead = timeToReadStr !== "" ? timeToReadStr : null;
+        
+        // Now, prefill the manual entry form with the extra finished book info.
+        document.getElementById('startDate').value = startDate;
+        document.getElementById('endDate').value = endDate;
+        document.getElementById('pagesPerHour').value = pagesPerHourStr;
+        document.getElementById('readingTime').value = timeToReadStr;
+        
+        // Now simulate a click on the manual entry form’s submit button.
+        simulateManualEntrySubmit();
+        
+        // Close the new finished modal.
+        closeModal(newModal);
+    });
+    
+    // Open the modal.
+    newModal.classList.remove('hidden');
+    newModal.classList.add('active');
+    newModal.style.display = 'flex';
+}
+
+function simulateManualEntrySubmit() {
+    // You can either dispatch a 'submit' event on the addBookForm or simply call its handler.
+    // Here we dispatch the event.
+    if (addBookForm) {
+        // Create a new event and dispatch it.
+        const event = new Event('submit', { bubbles: true, cancelable: true });
+        addBookForm.dispatchEvent(event);
+    } else {
+        console.error("addBookForm not found.");
+    }
+}
+
+function openReadingFromSearchModal() {
+    const modal = document.getElementById('readingFromSearchModal');
+    if (!modal) {
+      console.error("Reading From Search Modal not found.");
+      return;
+    }
+    // Pre-fill the modal with the details from tempBookFromSearch.
+    // tempBookFromSearch is assumed to have been set earlier when a search result was selected.
+    if (!tempBookFromSearch) {
+      console.error("No temporary book data available.");
+      return;
+    }
+    
+    // Fill in the fields in the modal.
+    document.getElementById('rfsCover').src = tempBookFromSearch.imageLinks && tempBookFromSearch.imageLinks.thumbnail ? tempBookFromSearch.imageLinks.thumbnail : './images/placeholder.jpeg';
+    document.getElementById('rfsTitle').textContent = tempBookFromSearch.title || "No Title";
+    document.getElementById('rfsAuthor').textContent = tempBookFromSearch.authors ? tempBookFromSearch.authors.join(", ") : "Unknown Author";
+    document.getElementById('rfsYear').textContent = tempBookFromSearch.publishedDate ? tempBookFromSearch.publishedDate.split("-")[0] : "N/A";
+    document.getElementById('rfsPages').textContent = tempBookFromSearch.pageCount ? `${tempBookFromSearch.pageCount} pages` : "";
+    
+    // Clear any previously entered start date.
+    document.getElementById('rfsStartDate').value = "";
+    
+    // Attach a click listener to the "Add Book" button (remove any previous listener first).
+    const addBtn = document.getElementById('rfsAddBookBtn');
+    addBtn.replaceWith(addBtn.cloneNode(true)); // remove previous listeners
+    const newAddBtn = document.getElementById('rfsAddBookBtn');
+    newAddBtn.addEventListener('click', () => {
+      const startDate = document.getElementById('rfsStartDate').value.trim();
+      if (!startDate) {
+        alert("Please enter a start date.");
+        return;
+      }
+      // Build the new book object using tempBookFromSearch and the start date.
+      const newBook = {
+        id: Date.now().toString(),
+        title: tempBookFromSearch.title || "No Title",
+        author: tempBookFromSearch.authors ? tempBookFromSearch.authors.join(", ") : "Unknown Author",
+        year: tempBookFromSearch.publishedDate ? parseInt(tempBookFromSearch.publishedDate.split("-")[0], 10) : 0,
+        pages: tempBookFromSearch.pageCount ? parseInt(tempBookFromSearch.pageCount, 10) : 0,
+        cover: (tempBookFromSearch.imageLinks && tempBookFromSearch.imageLinks.thumbnail) ? tempBookFromSearch.imageLinks.thumbnail : './images/placeholder.jpeg',
+        startDate: startDate,
+        tbr: false,
+        finished: false,
+        endDate: null,
+        pagesPerHour: null,
+        timeToRead: null,
+        backgroundMode: 'cover',
+        backgroundPosition: 'center',
+        currentPage: 0
+      };
+      allBooks.push(newBook);
+      updateAppState();
+      closeModal(modal);
+      // Clear the temporary book.
+      tempBookFromSearch = null;
+    });
+    
+    // Finally, show the modal.
+    modal.classList.remove('hidden');
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+}  
 
 });  
