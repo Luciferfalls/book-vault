@@ -1226,36 +1226,43 @@ async function searchCovers(query) {
 const searchCoverButton = document.getElementById('searchCoverButton');
 if (searchCoverButton) {
     searchCoverButton.addEventListener('click', async () => {
-        const title = document.getElementById('bookTitle').value.trim();
-        if (!title) {
-            alert("Enter a title first!");
-            return;
+        const bookTitle = document.getElementById("bookTitle").value.trim();
+        if (!bookTitle) {
+          alert("Please enter a book title to search for a cover.");
+          return;
         }
-
-        const modal = document.getElementById('coverSearchModal');
-        const resultsContainer = document.getElementById('coverSearchResults');
-        resultsContainer.innerHTML = "Loading...";
-        modal.style.display = 'flex';
-        modal.classList.add('active');
-
-        const covers = await searchCovers(title);
-        resultsContainer.innerHTML = "";
-        covers.forEach(cover => {
-            if (cover) {
-                const img = document.createElement("img");
-                img.src = cover;
-                img.classList.add("cover-option");
-                img.addEventListener('click', () => {
-                    document.getElementById('addBookCover').value = cover; // Set selected cover
-                    modal.style.display = 'none';
-                    modal.classList.remove('active');
-                });
-                resultsContainer.appendChild(img);
-            }
-        });
-    });
+        const coverSearchModal = document.getElementById("coverSearchModal");
+        const coverSearchResults = document.getElementById("coverSearchResults");
+        
+        coverSearchResults.innerHTML = `<p>Loading results for "${bookTitle}"...</p>`;
+        coverSearchModal.style.display = "flex";
+        coverSearchModal.classList.add("active");
+        
+        try {
+          const covers = await searchCovers(bookTitle);
+          console.log("Covers found:", covers);
+          coverSearchResults.innerHTML = "";
+          covers.forEach(cover => {
+            const img = document.createElement("img");
+            img.src = cover;
+            img.alt = "Cover Image";
+            img.className = "cover-search-result";
+            img.style.cursor = "pointer";
+            img.addEventListener("click", () => {
+              document.getElementById("addBookCover").value = cover;
+              document.getElementById("coverPreview").src = cover;
+              coverSearchModal.style.display = "none";
+              coverSearchModal.classList.remove("active");
+            });
+            coverSearchResults.appendChild(img);
+          });
+        } catch (error) {
+          console.error("Error fetching cover images:", error);
+          coverSearchResults.innerHTML = `<p>Error fetching cover images. Please try again.</p>`;
+        }
+    });    
 } else {
-    console.warn("searchCoverButton not found in the DOM");
+  console.warn("searchCoverButton not found in the DOM");
 }
 
 document.addEventListener('click', (e) => {
@@ -1399,7 +1406,7 @@ document.getElementById("coverSearchModal").addEventListener("click", (e) => {
     }
 });
 
-document.getElementById("searchCoverButton").addEventListener("click", () => {
+document.getElementById("searchCoverButton").addEventListener("click", async () => {
     const bookTitle = document.getElementById("bookTitle").value.trim();
     if (!bookTitle) {
         alert("Please enter a book title to search for a cover.");
@@ -1409,36 +1416,36 @@ document.getElementById("searchCoverButton").addEventListener("click", () => {
     const coverSearchModal = document.getElementById("coverSearchModal");
     const coverSearchResults = document.getElementById("coverSearchResults");
     
+    // Remove the hidden class so it can show
+    coverSearchModal.classList.remove("hidden");
     coverSearchResults.innerHTML = `<p>Loading results for "${bookTitle}"...</p>`;
+    
     coverSearchModal.style.display = "flex";
     coverSearchModal.classList.add("active");
     
-    // Fetch cover images
-    searchCovers(bookTitle)
-      .then((covers) => {
+    try {
+        const covers = await searchCovers(bookTitle);
+        console.log("Covers found:", covers);
         coverSearchResults.innerHTML = "";
-        covers.forEach((cover) => {
-          const img = document.createElement("img");
-          img.src = cover;
-          img.alt = "Cover Image";
-          img.className = "cover-search-result";
-          img.style.cursor = "pointer";
-    
-          img.addEventListener("click", () => {
-            coverUrlField.value = cover;
-            coverPreview.src = cover;
-            coverSearchModal.style.display = "none";
-            coverSearchModal.classList.remove("active");
-          });
-    
-          coverSearchResults.appendChild(img);
+        covers.forEach(cover => {
+            const img = document.createElement("img");
+            img.src = cover;
+            img.alt = "Cover Image";
+            img.className = "cover-search-result";
+            img.style.cursor = "pointer";
+            img.addEventListener("click", () => {
+                document.getElementById("addBookCover").value = cover;
+                document.getElementById("coverPreview").src = cover;
+                coverSearchModal.style.display = "none";
+                coverSearchModal.classList.remove("active");
+            });
+            coverSearchResults.appendChild(img);
         });
-      })
-      .catch((error) => {
+    } catch (error) {
         console.error("Error fetching cover images:", error);
         coverSearchResults.innerHTML = `<p>Error fetching cover images. Please try again.</p>`;
-      });
-});  
+    }
+});
 
 // Close the cover search modal
 document.querySelector("#coverSearchModal .close-modal").addEventListener("click", () => {
@@ -1449,14 +1456,16 @@ document.querySelector("#coverSearchModal .close-modal").addEventListener("click
 
 async function searchCovers(bookTitle) {
     const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(bookTitle)}`;
+    console.log("Fetching covers from:", apiUrl);
     const response = await fetch(apiUrl);
     const data = await response.json();
+    console.log("Search covers data:", data);
     return data.items
         ? data.items
-              .filter((item) => item.volumeInfo.imageLinks?.thumbnail)
-              .map((item) => item.volumeInfo.imageLinks.thumbnail)
+              .filter(item => item.volumeInfo.imageLinks?.thumbnail)
+              .map(item => item.volumeInfo.imageLinks.thumbnail)
         : [];
-}
+}  
 
 async function fetchGoodreadsPublicationDate(bookTitle) {
     const apiUrl = `https://www.goodreads.com/book/auto_complete?format=json&q=${encodeURIComponent(bookTitle)}`;

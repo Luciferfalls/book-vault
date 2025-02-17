@@ -1528,3 +1528,16 @@ box-sizing: border-box;
     z-index: 10;  /* ensure it's on top of other content */
     margin-right: -10px;
 }  
+
+.cover-search-result {
+    margin: 5px;
+} 
+
+#coverSearchModal .search-results {
+    margin-left: -10px;
+}
+
+#manualEntryContainer button[type="submit"] {
+    display: block;
+    margin: 20px auto 0; /* 20px top margin to create space from the button above, auto on left/right centers it, 0 bottom */
+}  
