@@ -420,33 +420,23 @@ function handleStartReadingSubmit(e) {
       alert("Please enter a start date.");
       return;
     }
-    // Check if there’s a temp book from search.
     let bookToUpdate;
     if (form.dataset.tempBook) {
       bookToUpdate = JSON.parse(form.dataset.tempBook);
-      // Remove the temp storage.
       delete form.dataset.tempBook;
     } else {
-      // Fallback: find book in allBooks by form.dataset.bookId (existing behavior).
       const bookId = form.dataset.bookId;
       bookToUpdate = allBooks.find(book => book.id === bookId);
     }
     if (bookToUpdate) {
-      // Update the book with the selected start date.
+      // Set the start date and mark the book as no longer TBR.
       bookToUpdate.startDate = startReadingDate;
-      // Now add (or update) the book in allBooks.
-      // If the book is not yet in allBooks, push it.
-      if (!allBooks.find(b => b.id === bookToUpdate.id)) {
-        allBooks.push(bookToUpdate);
-      } else {
-        allBooks = allBooks.map(b => b.id === bookToUpdate.id ? bookToUpdate : b);
-      }
+      bookToUpdate.tbr = false;  // This line moves the book from TBR to Currently Reading.
       updateAppState();
       closeModal(document.getElementById('startReadingModal'));
-      // Clear the temp book.
       tempBookFromSearch = null;
     }
-}  
+}   
 
 function attachFinishButtonListeners() {
     const finishButtons = document.querySelectorAll('.finish-btn');
