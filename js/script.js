@@ -2693,31 +2693,25 @@ function resetStats() {
         const avgChart = document.querySelector(`#stat-${cat}-average .stat-chart`);
 
         if (totalElement) totalElement.textContent = cat === 'time' ? '0 min' : '0';
-        if (avgElement) avgElement.textContent = cat === 'time' ? '0 min' : '0';
-        if (totalBox) totalBox.classList.remove('month-mode');
-        if (avgBox) avgBox.classList.remove('month-mode');
-        if (totalHeader) totalHeader.textContent = cat === 'pages' ? 'Pages Read' : cat === 'time' ? 'Reading Time' : 'Pages per Hour';
-        if (avgHeader) avgHeader.textContent = cat === 'pages' ? 'Pages Read' : cat === 'time' ? 'Reading Time' : 'Pages per Hour';
-        if (leastItem) {
-            leastItem.querySelector('.stat-value').textContent = '0';
-            leastItem.querySelector('.least-cover').src = './images/placeholder.jpeg';
-            leastItem.dataset.tooltip = 'N/A';
-        }
-        if (mostItem) {
-            mostItem.querySelector('.stat-value').textContent = '0';
-            mostItem.querySelector('.most-cover').src = './images/placeholder.jpeg';
-            mostItem.dataset.tooltip = 'N/A';
-        }
+        if (avgElement)   avgElement.textContent   = cat === 'time' ? '0 min' : '0';
+        if (totalBox)     totalBox.classList.remove('month-mode');
+        if (avgBox)       avgBox.classList.remove('month-mode');
+        if (totalHeader)  totalHeader.textContent  = cat === 'pages' ? 'Pages Read' : cat === 'time' ? 'Reading Time' : 'Pages per Hour';
+        if (avgHeader)    avgHeader.textContent    = cat === 'pages' ? 'Pages Read' : cat === 'time' ? 'Reading Time' : 'Pages per Hour';
+
         if (totalChart) totalChart.style.display = currentStatsView === 'graph' ? 'block' : 'none';
-        if (avgChart) avgChart.style.display = currentStatsView === 'graph' ? 'block' : 'none';
-        totalBox.querySelector('.stat-list')?.remove();
-        avgBox.querySelector('.stat-list')?.remove();
+        if (avgChart)   avgChart.style.display   = currentStatsView === 'graph' ? 'block' : 'none';
+
+        // Remove any existing lists (guard null boxes)
+        if (totalBox) totalBox.querySelector('.stat-list')?.remove();
+        if (avgBox)   avgBox.querySelector('.stat-list')?.remove();
+
         if (currentStatsView === 'graph') {
-            updateCharts(`chart-${cat}-total`, Array(12).fill(0), cat === 'pages' ? 'Pages Read' : cat === 'time' ? 'Reading Time (min)' : 'Pages Per Hour');
-            updateCharts(`chart-${cat}-average`, Array(12).fill(0), cat === 'pages' ? 'Avg Pages' : cat === 'time' ? 'Avg Time (min)' : 'Avg PPH');
+        updateCharts(`chart-${cat}-total`,   Array(12).fill(0), cat === 'pages' ? 'Pages Read'       : cat === 'time' ? 'Reading Time (min)' : 'Pages Per Hour');
+        updateCharts(`chart-${cat}-average`, Array(12).fill(0), cat === 'pages' ? 'Avg Pages'        : cat === 'time' ? 'Avg Time (min)'    : 'Avg PPH');
         } else {
-            updateYearListInBox(totalBox, Array(12).fill(0), cat === 'pages' ? 'pages' : cat === 'time' ? 'min' : '');
-            updateYearListInBox(avgBox, Array(12).fill(0), cat === 'pages' ? 'pages' : cat === 'time' ? 'min' : '');
+        if (totalBox) updateYearListInBox(totalBox, Array(12).fill(0), cat === 'pages' ? 'pages' : cat === 'time' ? 'min' : '');
+        if (avgBox)   updateYearListInBox(avgBox,   Array(12).fill(0), cat === 'pages' ? 'pages' : cat === 'time' ? 'min' : '');
         }
     });
     const statsYear = document.getElementById('statsYear');
@@ -2755,6 +2749,7 @@ function updateCharts(canvasId, data, label) {
 }
 
 function updateYearListInBox(box, data, unit) {
+    if (!box) return;
     const existingList = box.querySelector('.stat-list');
     if (existingList) existingList.remove();
     const listContainer = document.createElement('div');
