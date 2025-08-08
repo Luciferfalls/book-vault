@@ -2058,4 +2058,53 @@ background-color: #45a049;
       margin-bottom: 20px;  /* Optional: adds spacing between boxes */
     }
 }
-  
+
+.goal-row input[type="date"] {
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.05);
+  color: inherit;
+}
+.goal-row .goal-msg {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Goal row readability */
+.book-entry .goal-row {
+  background: rgba(0, 0, 0, 0.55);       /* dark glass behind text */
+  backdrop-filter: blur(2px);
+  padding: 6px 8px;
+  border-radius: 8px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  justify-content: center;   /* centers contents horizontally */
+  text-align: center;        /* centers the text itself */
+}
+
+.book-entry .goal-row input[type="date"] {
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  padding: 4px 6px;
+}
+
+/* Compact view (grid-view) tweaks */
+.grid-view .book-entry .goal-row input[type="date"] {
+  display: none; /* hide the picker in compact cards */
+}
+
+.grid-view .book-entry .update-progress-btn {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  line-height: 1;
+  border-radius: 6px;
+  opacity: 0.9;
+}
+
+.goal-row {
+  justify-content: center;   /* center the whole row */
+  text-align: center;        /* center the text */
+}

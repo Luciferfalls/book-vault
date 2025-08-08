@@ -59,6 +59,7 @@ toggleViewBtn.addEventListener('click', () => {
     sections.forEach(section => section.classList.toggle('grid-view'));
     
     attachGridViewListeners();
+    displayBooks();
 });
 
 const manualEntryModeBtn = document.getElementById('manualEntryModeBtn');
@@ -592,6 +593,47 @@ function handleFinishReadingSubmit(e) {
     }
 } 
 
+// --- goal helpers ---
+function toLocalMidnight(dateStr) {
+  // expects YYYY-MM-DD (from <input type="date">)
+  if (!dateStr) return null;
+  return new Date(`${dateStr}T00:00:00`);
+}
+
+function todayLocal() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+function calcPagesPerDay(book) {
+  // Only for currently reading
+  if (book.tbr || book.finished) return { status: 'none' };
+
+  const pagesTotal = Number(book.pages) || 0;
+  const currentPage = Number(book.currentPage) || 0;
+  const goal = book.goalEndDate ? toLocalMidnight(book.goalEndDate) : null;
+  const today = todayLocal();
+
+  if (!goal) return { status: 'no-goal' };
+
+  const pagesLeft = Math.max(0, pagesTotal - currentPage);
+
+  // Goal met
+  if (pagesLeft === 0) return { status: 'met', pagesLeft };
+
+  // Past goal
+  if (goal < today) {
+    return { status: 'missed', pagesLeft };
+  }
+
+  // Inclusive day count (today AND goal day)
+  const oneDay = 24 * 60 * 60 * 1000;
+  const days = Math.floor((goal - today) / oneDay) + 1;
+  const perDay = Math.ceil(pagesLeft / Math.max(1, days));
+
+  return { status: 'plan', perDay, pagesLeft, days };
+}
+
 function displayBooks() {
     // Clear all sections
     toBeReadSection.innerHTML = '';
@@ -911,6 +953,75 @@ renderOrder.forEach(book => {
 
       progressContainer.appendChild(updateProgressButton);
       bookElement.appendChild(progressContainer);
+      // ---- Goal end-date + pages/day row (tiny date picker + message) ----
+        const goalRow = document.createElement('div');
+        goalRow.classList.add('goal-row');
+        goalRow.style.marginTop = '8px';
+        goalRow.style.display = 'flex';
+        goalRow.style.alignItems = 'center';
+        goalRow.style.gap = '8px';
+
+        const goalInput = document.createElement('input');
+        goalInput.type = 'date';
+        goalInput.value = book.goalEndDate || '';
+        goalInput.title = 'Set goal end date';
+        goalInput.style.fontSize = '0.9rem';
+        goalInput.style.padding = '4px';
+
+        const goalMsg = document.createElement('span');
+        goalMsg.classList.add('goal-msg');
+        goalMsg.style.fontSize = '0.9rem';
+        goalMsg.style.opacity = '0.95';
+
+        // helper to know if we’re in compact (grid) view for CR section
+        function inCompactView() {
+        return currentlyReadingSection.classList.contains('grid-view');
+        }
+
+        function renderGoalMessage() {
+        const result = calcPagesPerDay(book);
+
+        const compact = inCompactView();
+
+        // Decide message text for both modes
+        let text = '';
+        if (result.status === 'no-goal') {
+            text = compact ? 'No goal set' : 'Set a goal date to get pages/day.';
+        } else if (result.status === 'met') {
+            text = compact ? 'Goal met 🎉' : 'Goal met 🎉';
+        } else if (result.status === 'missed') {
+            text = compact ? `Missed • ${result.pagesLeft} left` : `Goal date passed; ${result.pagesLeft} pages left.`;
+        } else if (result.status === 'plan') {
+            if (compact) {
+            // compact: just show the number
+            text = `~${result.perDay}/day`;
+            } else {
+            // full: show date + pages/day
+            const d = toLocalMidnight(book.goalEndDate);
+            const goalLabel = d ? d.toLocaleDateString() : book.goalEndDate;
+            text = `Goal: ${goalLabel} • Read ~${result.perDay} pages/day`;
+            }
+        }
+
+        goalMsg.textContent = text;
+
+        // Show/hide the date input based on compact view
+        goalInput.style.display = compact ? 'none' : 'inline-block';
+        }
+
+        goalInput.addEventListener('change', (e) => {
+        const val = e.target.value || null; // ISO from <input type="date">
+        allBooks = allBooks.map(b => b.id === book.id ? { ...b, goalEndDate: val } : b);
+        book.goalEndDate = val; // keep this object in sync for immediate render
+        updateAppState(); // re-renders the card (and recalculates)
+        });
+
+        // initial render
+        renderGoalMessage();
+
+        goalRow.appendChild(goalInput);
+        goalRow.appendChild(goalMsg);
+        bookElement.appendChild(goalRow);
       currentlyReadingSection.appendChild(bookElement);
     } else {
       finishedBooksSection.appendChild(bookElement);
@@ -1181,7 +1292,7 @@ addBookForm.addEventListener('submit', (e) => {
         readingTime = document.getElementById('readingTime').value.trim() || null;
     }
 
-    const newBook = {
+        const newBook = {
         id: Date.now().toString(),
         title,
         author,
@@ -1191,12 +1302,13 @@ addBookForm.addEventListener('submit', (e) => {
         startDate,
         tbr: selectedBookType === 'tbr',
         finished: selectedBookType === 'finished',
-        endDate: finishedEndDate,         // NEW: Set finished book's end date
-        pagesPerHour: pagesPerHour,         // NEW: Set finished book's pages per hour
-        timeToRead: readingTime,            // NEW: Set finished book's total reading time
-        backgroundMode: 'cover', // Default
-        backgroundPosition: 'center', // Default background position
-        currentPage: selectedBookType === 'reading' ? 0 : undefined  // Only for "Currently Reading"
+        endDate: finishedEndDate,
+        pagesPerHour: pagesPerHour,
+        timeToRead: readingTime,
+        backgroundMode: 'cover',
+        backgroundPosition: 'center',
+        currentPage: selectedBookType === 'reading' ? 0 : undefined,
+        goalEndDate: selectedBookType === 'reading' ? null : undefined
     };
 
     allBooks.push(newBook);
@@ -1701,6 +1813,7 @@ bottomToggle.addEventListener('click', () => {
       console.log("Switched to List view");
     }
   }
+  displayBooks();
 });
 
 // --- Switch Section Button ---
@@ -2219,8 +2332,10 @@ function openReadingFromSearchModal() {
         timeToRead: null,
         backgroundMode: 'cover',
         backgroundPosition: 'center',
-        currentPage: 0
-      };
+        currentPage: 0,
+        goalEndDate: null
+        };
+
       allBooks.push(newBook);
       updateAppState();
       closeModal(modal);
