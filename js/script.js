@@ -994,7 +994,7 @@ renderOrder.forEach(book => {
         } else if (result.status === 'plan') {
             if (compact) {
             // compact: just show the number
-            text = `~${result.perDay}/day`;
+            text = `~${result.perDay} pages/day`;
             } else {
             // full: show date + pages/day
             const d = toLocalMidnight(book.goalEndDate);
