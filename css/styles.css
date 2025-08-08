@@ -1559,3 +1559,503 @@ box-sizing: border-box;
 } 
 
 */
+
+/* Stats Section Container */
+#statsSection {
+    background-color: #0d1b33; /* A different background color */
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px auto;
+    width: 90%;
+    max-width: 1200px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+/* Each stat category (stacked vertically) */
+.stat-category {
+    margin-bottom: 30px;
+}
+
+/* Title for each stat category */
+.stat-category h3 {
+    margin-bottom: 10px;
+    font-size: 1.8rem;
+}
+
+.stat-boxes {
+    display: flex;
+    justify-content: space-between; /* Changed from space-evenly */
+    flex-wrap: wrap;
+    gap: 10px; /* Reduced from 15px */
+}
+
+.stat-box {
+    background-color: #1f3b73;
+    padding: 15px;
+    border-radius: 8px;
+    width: 32%; /* Increased from 22% to fill more space */
+    min-width: 200px; /* Increased from 150px for wider charts */
+    box-sizing: border-box;
+    text-align: center;
+}
+
+/* Stat value inside a box */
+.stat-box .stat-value {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+/* Style the canvas for the charts */
+.stat-box .stat-chart {
+    width: 100%;
+    height: 150px; /* Fixed height */
+    max-height: 150px; /* Prevent overflow */
+}
+
+/* Stats Filters (the toggle buttons for filtering) */
+#statsFilters {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+#statsFilters .stats-filter-btn {
+    padding: 8px 15px;
+    background-color: #3a6ea5;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+#statsFilters .stats-filter-btn:hover,
+#statsFilters .stats-filter-btn.active {
+    background-color: #4b8ed7;
+}
+
+.stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.stat-header h3 {
+    text-align: center;
+    width: 100%;
+}
+
+.stat-toggles {
+    margin-bottom: 10px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.stat-toggle {
+    padding: 6px 12px;
+    background-color: #3a6ea5;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.stat-toggle.active {
+    background-color: #4caf50;
+}
+
+.stat-toggle:hover {
+    background-color: #4b8ed7;
+}
+
+.month-select {
+    padding: 8px;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.least-most-images {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 10px;
+}
+
+.least-most-images img {
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.stat-box .stat-value {
+    white-space: pre-line; /* Allow line breaks in Least/Most text */
+}
+
+.least-most-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-top: 10px;
+    height: 80%;
+}
+
+.least-most-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.least-most-item small {
+    display: block;
+    text-align: center;
+    margin-bottom: 5px;
+    font-size: 1.3rem;  /* Increase from default */
+    font-weight: bold;
+}
+
+.least-most-item img {
+    width: 100px; /* Even larger covers */
+    height: auto;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease;
+}
+
+.least-most-item .stat-value {
+    font-size: 1.1rem;
+    color: #fff;
+}
+
+.least-most-item:hover img {
+    transform: scale(1.05);
+}
+
+.least-most-item:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 110%; /* Place it above the item */
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #4b8ed7, #2a4a8c);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+    white-space: pre-line;
+    z-index: 100;
+    font-size: 14px;
+}  
+
+.least-most-item:hover::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f3b73;
+    color: #ffcc00;
+    padding: 10px;
+    border: 2px solid #ffcc00;
+    border-radius: 8px;
+    white-space: pre-line;
+    font-size: 1rem;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.5);
+    z-index: 10;
+    height: fit-content;
+}
+
+.least-most-item:hover::before {
+    content: '';
+    display: block;
+    width: 100%;
+    padding: 5px 10px;
+    background-color: rgba(0, 0, 0, 0.8);
+    border-radius: 5px;
+    margin-bottom: 5px;
+}
+
+.least-most-item:hover::before:after {
+    content: attr(data-tooltip);
+    display: block;
+    white-space: pre-line;
+}
+
+.least-most-item:hover::before:after:first-line {
+    color: #ff9800; /* Gold title */
+    font-weight: bold;
+}
+
+.least-most-item:hover span:first-line {
+    color: #ff9800; /* Orange title */
+    font-weight: bold;
+}
+
+.month-display {
+    display: inline-block;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #4b8ed7, #2a4a8c);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    color: #fff;
+    font-size: 1.2rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.month-display:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+}
+
+.view-toggles {
+    display: flex;
+    gap: 5px;
+    margin-left: 10px;
+}
+
+.stat-header button.graph-toggle, .stat-header button.list-toggle {
+    padding: 6px 12px;
+    background-color: #3a6ea5;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.stat-header button.graph-toggle.active, .stat-header button.list-toggle.active {
+    background-color: #4caf50;
+}
+
+.stat-header button.graph-toggle:hover, .stat-header button.list-toggle:hover {
+    background-color: #4b8ed7;
+}
+
+.year-list-view {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #1f3b73;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.year-list-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background-color: #2a4a8c;
+    margin: 5px 0;
+    border-radius: 5px;
+    color: #fff;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.year-list-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* When in month mode, ensure all stat boxes have a fixed height */
+.stat-box.month-mode {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    /* Optionally, force a fixed height if needed; for example: */
+    height: 250px;
+    text-align: center;
+}
+
+/* Style the month label so it appears at the top and is centered */
+.month-label {
+    font-size: 1.6rem;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 10px;
+    width: 100%;
+}
+  
+/* Style the header inside each stat box in month mode to show the month name */
+.stat-box.month-mode .stat-header h3 {
+    width: 100%;
+    text-align: center;
+    margin: 0;
+    padding-bottom: 10px;
+    font-size: 1.8rem; /* Adjust as needed */
+}
+
+.stat-box.month-mode .stat-value {
+    font-size: 1.8rem;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #4b8ed7, #2a4a8c);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-box.month-mode .stat-value:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.stats-controls {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-bottom: 20px;
+    position: sticky;
+    top: 10px;
+    z-index: 100;
+    background-color: #1f3b73; /* Match your stats section background */
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.mode-toggle, .view-toggle {
+    padding: 6px 12px;
+    background-color: #3a6ea5;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.mode-toggle:hover, .view-toggle:hover {
+    background-color: #4b8ed7;
+}
+
+.slider-container {
+    position: relative;
+    width: 240px;          /* Enough width for both labels */
+    height: 40px;
+    background-color: #3a6ea5;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    cursor: pointer;
+    user-select: none;
+}
+
+.slider-container .slider-label {
+    position: relative;
+    z-index: 2;
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.slider-option {
+    position: relative; /* Make these positioned so z-index works */
+    z-index: 2;         /* Higher z-index so text appears on top */
+    width: 50%;
+    height: 100%;
+    display: inline-block;
+    text-align: center;
+    line-height: 30px;
+    color: white;
+    font-size: 14px;
+    transition: color 0.3s ease;
+}
+
+.slider-option:first-child {
+    border-top-left-radius: 15px;
+    border-bottom-left-radius: 15px;
+}
+
+.slider-option:last-child {
+    border-top-right-radius: 15px;
+    border-bottom-right-radius: 15px;
+}
+
+.slider-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
+    background-color: #4caf50;
+    border-radius: 20px;
+    transition: left 0.3s ease;
+    z-index: 1;
+    opacity: 0.9;
+}
+
+#selectCoverFileButton {
+    margin-top: 10px;
+    display: block; /* ensure it starts on a new line */
+}  
+
+/* Recommendations Modal Grid */
+.rec-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+
+/* Recommendation Card Style */
+.rec-card {
+background-color: #1f3b73;
+border-radius: 10px;
+padding: 15px;
+text-align: center;
+max-width: 200px;
+}
+
+.rec-card img {
+width: 100%;
+height: auto;
+border-radius: 5px;
+margin-bottom: 10px;
+}
+
+.rec-card h3 {
+margin: 10px 0 5px;
+font-size: 1.2rem;
+}
+
+.rec-card p {
+font-size: 0.9rem;
+margin: 5px 0;
+}
+
+.rec-card .add-to-tbr-btn {
+margin-top: 10px;
+padding: 8px 12px;
+background-color: #4caf50;
+color: #fff;
+border: none;
+border-radius: 5px;
+cursor: pointer;
+}
+
+.rec-card .add-to-tbr-btn:hover {
+background-color: #45a049;
+}
+
+/* Ensure the book details modal is fully in view and scrollable without showing a scrollbar */
+#bookDetailsModal .book-details-modal {
+    max-height: 90vh;            /* Limit the modal to 90% of the viewport height */
+    overflow-y: auto;            /* Enable vertical scrolling if content overflows */
+    -ms-overflow-style: none;    /* Hide scrollbar in IE and Edge */
+    scrollbar-width: none;       /* Hide scrollbar in Firefox */
+}
+#bookDetailsModal .book-details-modal::-webkit-scrollbar {
+    display: none;               /* Hide scrollbar in Chrome, Safari, and Opera */
+}
+
+@media (max-width: 767px) {
+    /* Make the stat boxes stack vertically and use full width on mobile */
+    .stat-boxes {
+      flex-direction: column;
+    }
+    .stat-box {
+      width: 100%;
+      margin-bottom: 20px;  /* Optional: adds spacing between boxes */
+    }
+}
+  

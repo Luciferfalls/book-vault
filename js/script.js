@@ -1,40 +1,58 @@
 document.addEventListener('DOMContentLoaded', () => {
     
-const addBookModal = document.getElementById('addBookModal');
-const addBookForm = document.getElementById('addBookForm');
-const bookTypeDropdown = document.getElementById('bookType');
-const coverUrlField = document.getElementById("addBookCover");
-const coverPreview = document.getElementById("coverPreview");
-const toBeReadSection = document.getElementById('toBeReadSection');
-const goalContainer = document.querySelector('.goal-container');
-const goalDisplay = document.getElementById('goalCount');
-const currentlyReadingBtn = document.getElementById('currentlyReadingBtn');
-const finishedBooksBtn = document.getElementById('finishedBooksBtn');
-const currentlyReadingSection = document.getElementById('currentlyReadingSection');
-const finishedBooksSection = document.getElementById('finishedBooksSection');
-const modal = document.getElementById('startReadingModal'); // Ensure modal is defined
-const form = modal.querySelector('form'); // Get the form within the modal
-const addBookButton = document.getElementById('openAddBookModal');
-const coverElement = document.getElementById('addBookCover');
-const cover = coverElement ? coverElement.value.trim() : './images/placeholder.jpeg';
-const resultsContainer = document.getElementById('results-container');
-
-
-let currentYear = new Date().getFullYear();
-let yearlyGoal = 50;  // Default Goal
-let booksRead = 0;
-let allBooks = JSON.parse(localStorage.getItem('books')) || [];
-
-let tempBookFromSearch = null;
-
-// Retrieve the sort order from localStorage, defaulting to 'desc'
-let finishedSortOrder = localStorage.getItem('finishedSortOrder') || 'desc';
-
-
-const toggleViewBtn = document.getElementById('toggleView');
-const sections = [toBeReadSection, currentlyReadingSection, finishedBooksSection];
-
-let currentSortOrder = 'desc'; // Default sorting order
+    const addBookModal = document.getElementById('addBookModal');
+    const addBookForm = document.getElementById('addBookForm');
+    const bookTypeDropdown = document.getElementById('bookType');
+    const coverUrlField = document.getElementById("addBookCover");
+    const coverPreview = document.getElementById("coverPreview");
+    const toBeReadSection = document.getElementById('toBeReadSection');
+    const goalContainer = document.querySelector('.goal-container');
+    const goalDisplay = document.getElementById('goalCount');
+    const currentlyReadingBtn = document.getElementById('currentlyReadingBtn');
+    const finishedBooksBtn = document.getElementById('finishedBooksBtn');
+    const currentlyReadingSection = document.getElementById('currentlyReadingSection');
+    const finishedBooksSection = document.getElementById('finishedBooksSection');
+    const modal = document.getElementById('startReadingModal'); // Ensure modal is defined
+    const form = modal.querySelector('form'); // Get the form within the modal
+    const addBookButton = document.getElementById('openAddBookModal');
+    const coverElement = document.getElementById('addBookCover');
+    const cover = coverElement ? coverElement.value.trim() : './images/placeholder.jpeg';
+    const resultsContainer = document.getElementById('results-container');
+    
+    let currentYear = new Date().getFullYear();
+    let yearlyGoal = 50;  // Default Goal
+    let booksRead = 0;
+    let allBooks = JSON.parse(localStorage.getItem('books')) || [];
+    let selectedMonth = new Date().getMonth(); // Default to current month (0-11)
+    let currentMode = 'year'; // Track Year/Month mode
+    let currentStatsView = 'graph'; // Track Graph/List view for stats
+    
+    let tempBookFromSearch = null;
+    
+    // Retrieve the sort order from localStorage, defaulting to 'desc'
+    let finishedSortOrder = localStorage.getItem('finishedSortOrder') || 'desc';
+    
+    // Global chart instances for stats charts
+    window.chartPagesTotal = null;
+    window.chartPagesAverage = null;
+    window.chartPagesLeast = null;
+    window.chartPagesMost = null;
+    
+    window.chartTimeTotal = null;
+    window.chartTimeAverage = null;
+    window.chartTimeLeast = null;
+    window.chartTimeMost = null;
+    
+    window.chartPPHTotal = null;
+    window.chartPPHAverage = null;
+    window.chartPPHLeast = null;
+    window.chartPPHMost = null;
+    
+    const toggleViewBtn = document.getElementById('toggleView');
+    const sections = [toBeReadSection, currentlyReadingSection, finishedBooksSection];
+    
+    let currentSortOrder = 'desc'; // Default sorting order
+    let currentView = "grid"; // Default view for book sections
 
 toggleViewBtn.addEventListener('click', () => {
     const sections = [toBeReadSection, currentlyReadingSection, finishedBooksSection];
@@ -241,13 +259,32 @@ window.addEventListener('keydown', (e) => {
     }
 });
 
+// In updateAppState
 function updateAppState() {
-    localStorage.setItem('books', JSON.stringify(allBooks)); // Save books to local storage
+    localStorage.setItem('books', JSON.stringify(allBooks));
     updateDashboard();
     displayBooks();
     attachStartReadingListeners();
     attachFinishButtonListeners();
+    calculateStats(); // Already here, ensure it stays
 }
+
+// When stats button is clicked
+document.getElementById('statsBtn').addEventListener('click', () => {
+    document.getElementById('toBeReadSection').style.display = 'none';
+    document.getElementById('currentlyReadingSection').style.display = 'none';
+    document.getElementById('finishedBooksSection').style.display = 'none';
+    document.getElementById('statsSection').style.display = 'block';
+    calculateStats(); // Ensure stats update on view
+});
+
+// When year changes
+document.getElementById('yearSelect').addEventListener('change', (e) => {
+    currentYear = parseInt(e.target.value, 10);
+    updateAppState();
+    loadGoal();
+    calculateStats(); // Update stats for new year
+});
 
 function loadGoal() {
     const savedGoal = localStorage.getItem(`goal-${currentYear}`);
@@ -271,6 +308,18 @@ function updateDashboard() {
     const savedGoal = localStorage.getItem(`goal-${currentYear}`);
     document.getElementById('goalCount').textContent = savedGoal ? savedGoal : yearlyGoal;
 }
+
+function formatTimeHMS(ms) {
+    let totalSeconds = Math.floor(ms / 1000);
+    let hours = Math.floor(totalSeconds / 3600);
+    let minutes = Math.floor((totalSeconds % 3600) / 60);
+    let seconds = totalSeconds % 60;
+    return (
+      String(hours).padStart(2, '0') + ':' +
+      String(minutes).padStart(2, '0') + ':' +
+      String(seconds).padStart(2, '0')
+    );
+}  
 
 goalDisplay.addEventListener('click', () => {
     let newGoal = prompt("Enter your new yearly goal:", goalDisplay.textContent);
@@ -458,6 +507,23 @@ function openFinishReadingModal(bookId) {
     const form = modal.querySelector('form');
     form.dataset.bookId = bookId;
 
+     // Get the corresponding book
+    const book = allBooks.find(b => b.id === bookId);
+    // Get the start date input element in the finish modal
+    const finishStartDateInput = form.querySelector('#finishStartDate');
+    // Auto-fill the start date from the book and hide the container
+    if (book && book.startDate) {
+        finishStartDateInput.value = book.startDate;
+        // Hide the container that holds the start date label and input
+        form.querySelector('.finish-start-container').style.display = 'none';
+        // Remove the required attribute so it doesn't trigger validation
+        finishStartDateInput.removeAttribute('required');
+    } else {
+        // If somehow no start date exists, show the field
+        form.querySelector('.finish-start-container').style.display = 'block';
+        finishStartDateInput.setAttribute('required', 'true');
+    }
+
     modal.classList.add('active');
     modal.style.display = 'flex';
 
@@ -509,13 +575,17 @@ function handleFinishReadingSubmit(e) {
         // Mark the book as finished.
         tempBook.finished = true;
         tempBook.tbr = false;
-        
-        // Now update allBooks: if the book isn’t already there, push it.
+
+        // Now update allBooks
         if (!allBooks.find(b => b.id === tempBook.id)) {
             allBooks.push(tempBook);
         } else {
             allBooks = allBooks.map(b => b.id === tempBook.id ? tempBook : b);
         }
+
+        // Automatically sort finished books based on current finishedSortOrder
+        sortFinishedBooks();
+
         updateAppState();
         closeModal(document.getElementById('finishReadingModal'));
         tempBookFromSearch = null;
@@ -704,233 +774,189 @@ function displayBooks() {
 
     // --- Process Non-TBR Books ---
     // These include "Currently Reading" and "Finished" books.
-    filteredBooks.forEach(book => {
-        if (book.tbr) {
-            // TBR books are handled above
-            return;
-        }
+    // --- Process Non-TBR Books ---
+// Build ordered list so finished books render in the right order.
+const nonTbr = filteredBooks.filter(b => !b.tbr);
+const currentlyReadingBooks = nonTbr.filter(b => !b.finished);
+const finishedBooksOrdered = nonTbr
+  .filter(b => b.finished)
+  .sort((a, b) => {
+    // Use Date objects so comparisons are reliable
+    const ta = a.endDate ? new Date(a.endDate).getTime() : -Infinity;
+    const tb = b.endDate ? new Date(b.endDate).getTime() : -Infinity;
+    // finishedSortOrder: 'desc' = newest on top, 'asc' = oldest on top
+    return (finishedSortOrder === 'desc') ? (tb - ta) : (ta - tb);
+  });
 
-        const bookElement = document.createElement('div');
-        bookElement.classList.add('book-entry');
-        bookElement.style.backgroundImage = `url('${book.cover || './images/placeholder.jpeg'}')`;
-        bookElement.style.backgroundSize = 'cover';
-        bookElement.style.backgroundRepeat = 'no-repeat';
-        bookElement.style.backgroundPosition = book.backgroundPosition || 'center';
-        bookElement.style.opacity = '0.8';        
+// We’ll loop reading first (to render into Currently Reading),
+// then finished (sorted) which renders into Finished Books.
+const renderOrder = [...currentlyReadingBooks, ...finishedBooksOrdered];
 
-        const formattedStartDate = formatDate(book.startDate);
-        const formattedEndDate = book.endDate ? formatDate(book.endDate) : null;
-        const formattedTime = book.timeToRead ? formatTime(book.timeToRead) : 'N/A';
+renderOrder.forEach(book => {
+    // ======= paste the entire original rendering block body here =======
+    // (Everything from your original forEach’s opening brace `{`
+    //   down to its closing brace `});`
+    //   KEEP IT AS-IS.)
+    // The only change we made is the order of books we iterate over.
+    
+    const bookElement = document.createElement('div');
+    bookElement.classList.add('book-entry');
+    bookElement.style.backgroundImage = `url('${book.cover || './images/placeholder.jpeg'}')`;
+    bookElement.style.backgroundSize = 'cover';
+    bookElement.style.backgroundRepeat = 'no-repeat';
+    bookElement.style.backgroundPosition = book.backgroundPosition || 'center';
+    bookElement.style.opacity = '0.8';        
 
-        bookElement.innerHTML = `
-        <div class="book-entry-split">
-            <div class="cover-container">
-            <img src="${book.cover}" alt="${book.title} Cover" class="book-cover">
-            <button class="more-options-btn">...</button>
-            <div class="dropdown hidden book-options">
-                <button class="edit-btn">Edit</button>
-                <button class="delete-btn" data-book-id="${book.id}">Delete</button>
-                <button class="adjust-background-btn" data-book-id="${book.id}">Adjust Background</button>
-            </div>
-            </div>
-            <div class="info-container">
-                <div class="info-wrapper">
-                    <h3>${book.title}</h3>
-                    <p>${book.author}</p>
-                    <p>${book.year}</p>
-                    <p>${book.pages} pages</p>
-                    ${book.tbr ? '' : `<p><strong>Start Date:</strong> ${formatDate(book.startDate)}</p>`}
-                    ${book.finished ? `<p><strong>End Date:</strong> ${formatDate(book.endDate)}</p>` : ''}
-                    ${book.finished && book.pagesPerHour ? `<p><strong>Pages per Hour:</strong> ${book.pagesPerHour}</p>` : ''}
-                    ${book.finished && book.timeToRead ? `<p><strong>Total Reading Time:</strong> ${formatReadingTime(book.timeToRead)}</p>` : ''}
-                </div>
-                </div>
+    const formattedStartDate = formatDate(book.startDate);
+    const formattedEndDate = book.endDate ? formatDate(book.endDate) : null;
+    const formattedTime = book.timeToRead ? formatTime(book.timeToRead) : 'N/A';
+
+    bookElement.innerHTML = `
+    <div class="book-entry-split">
+        <div class="cover-container">
+        <img src="${book.cover}" alt="${book.title} Cover" class="book-cover">
+        <button class="more-options-btn">...</button>
+        <div class="dropdown hidden book-options">
+            <button class="edit-btn">Edit</button>
+            <button class="delete-btn" data-book-id="${book.id}">Delete</button>
+            <button class="adjust-background-btn" data-book-id="${book.id}">Adjust Background</button>
         </div>
-        `;
+        </div>
+        <div class="info-container">
+            <div class="info-wrapper">
+                <h3>${book.title}</h3>
+                <p>${book.author}</p>
+                <p>${book.year}</p>
+                <p>${book.pages} pages</p>
+                ${book.tbr ? '' : `<p><strong>Start Date:</strong> ${formatDate(book.startDate)}</p>`}
+                ${book.finished ? `<p><strong>End Date:</strong> ${formatDate(book.endDate)}</p>` : ''}
+                ${book.finished && book.pagesPerHour ? `<p><strong>Pages per Hour:</strong> ${book.pagesPerHour}</p>` : ''}
+                ${book.finished && book.timeToRead ? `<p><strong>Total Reading Time:</strong> ${formatReadingTime(book.timeToRead)}</p>` : ''}
+            </div>
+            </div>
+    </div>
+    `;
 
-        // Attach the click listener only to the cover image:
-        const coverImage = bookElement.querySelector('.book-cover');
-        if (coverImage) {
-        coverImage.addEventListener('click', (e) => {
-            // Prevent the click from propagating up
-            e.stopPropagation();
-            // Open the book details modal for this book.
-            openBookDetailsModal(book);
-        });
+    // (All your existing listeners and logic below remain unchanged)
+    // cover click -> openBookDetailsModal, adjustBackgroundButton, progress bar,
+    // currently-reading vs finished append targets, more-options dropdown,
+    // delete/edit handlers, etc.
+
+    // Attach the click listener only to the cover image:
+    const coverImage = bookElement.querySelector('.book-cover');
+    if (coverImage) {
+      coverImage.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openBookDetailsModal(book);
+      });
+    }
+
+    const adjustBackgroundButton = bookElement.querySelector('.adjust-background-btn');
+    if (adjustBackgroundButton) {
+      adjustBackgroundButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (!book.backgroundPosition || book.backgroundPosition === "") {
+          book.backgroundPosition = 'center';
         }
-
-        const adjustBackgroundButton = bookElement.querySelector('.adjust-background-btn');
-        if (adjustBackgroundButton) {
-            adjustBackgroundButton.addEventListener('click', (e) => {
-                // Prevent the click from bubbling up and interfering with the dropdown toggle
-                e.stopPropagation();
-                e.preventDefault();
-                
-                // Ensure the book has a defined backgroundPosition; default to 'center' if not.
-                if (!book.backgroundPosition || book.backgroundPosition === "") {
-                    book.backgroundPosition = 'center';
-                }
-                
-                // Cycle through positions: center -> bottom -> top -> center
-                if (book.backgroundPosition === 'center') {
-                    book.backgroundPosition = 'bottom';
-                } else if (book.backgroundPosition === 'bottom') {
-                    book.backgroundPosition = 'top';
-                } else {
-                    book.backgroundPosition = 'center';
-                }
-                
-                console.log("New background position for", book.title, ":", book.backgroundPosition);
-                
-                // Update the inline style of the book element to use the new background position
-                bookElement.style.backgroundPosition = book.backgroundPosition;
-                
-                // Update the global allBooks array for this book
-                allBooks = allBooks.map(b => {
-                    if (b.id === book.id) {
-                        return { ...b, backgroundPosition: book.backgroundPosition };
-                    }
-                    return b;
-                });
-                // Save the updated array to localStorage (without re-rendering the whole UI)
-                localStorage.setItem('books', JSON.stringify(allBooks));
-            });
-        }
-
-        // Process Currently Reading books (with progress bar)
-        if (!book.finished) {
-            // For "Currently Reading" books, ensure currentPage is defined
-            if (typeof book.currentPage !== 'number') {
-                book.currentPage = 0;
-            }
-            
-            // Create Progress Bar Container
-            const progressContainer = document.createElement('div');
-            progressContainer.classList.add('progress-container');
-
-            // Create a text element to show the progress (e.g. "77 / 372 (21%)")
-            const progressText = document.createElement('p');
-            progressText.classList.add('progress-text');
-            const progressPercentage = Math.round((book.currentPage / book.pages) * 100);
-            progressText.textContent = `${book.currentPage} / ${book.pages} (${progressPercentage}%)`;
-            progressContainer.appendChild(progressText);
-
-            // Create Progress Bar Container (the gray background)
-            const progressBarContainer = document.createElement('div');
-            progressBarContainer.classList.add('progress-bar-container');
-
-            // Create the Progress Bar element (the green bar)
-            const progressBar = document.createElement('div');
-            progressBar.classList.add('progress-bar');
-            progressBar.setAttribute('data-book-id', book.id);
-            const initialProgress = (book.currentPage / book.pages) * 100;
-            progressBar.style.width = `${initialProgress}%`;
-
-            progressBarContainer.appendChild(progressBar);
-            progressContainer.appendChild(progressBarContainer);
-
-            // Create Update Progress Button
-            const updateProgressButton = document.createElement('button');
-            updateProgressButton.textContent = 'Update Progress';
-            updateProgressButton.classList.add('update-progress-btn');
-
-            updateProgressButton.addEventListener('click', () => {
-                const newPage = prompt(`Enter your current page (out of ${book.pages}):`);
-                if (!newPage || isNaN(newPage) || newPage < 1 || newPage > book.pages) {
-                    alert('Invalid page number. Please enter a number within range.');
-                    return;
-                }
-                
-                const updatedValue = parseInt(newPage, 10);
-                console.log("✅ New page value entered:", updatedValue);
-                allBooks = allBooks.map(b => {
-                    if (b.id === book.id) {
-                        return { ...b, currentPage: updatedValue };
-                    }
-                    return b;
-                });
-                book.currentPage = updatedValue;
-                progressText.textContent = `${book.currentPage} / ${book.pages} (${Math.round((book.currentPage / book.pages) * 100)}%)`;
-                const newWidth = (book.currentPage / book.pages) * 100;
-                console.log(`➡️ New Progress Width should be: ${newWidth}%`);
-                progressBar.style.width = `${newWidth}%`;
-                updateAppState();
-            });
-
-            progressContainer.appendChild(updateProgressButton);
-            bookElement.appendChild(progressContainer);
-
-            currentlyReadingSection.appendChild(bookElement);
+        if (book.backgroundPosition === 'center') {
+          book.backgroundPosition = 'bottom';
+        } else if (book.backgroundPosition === 'bottom') {
+          book.backgroundPosition = 'top';
         } else {
-            // If finished, append to finishedBooksSection
-            finishedBooksSection.appendChild(bookElement);
+          book.backgroundPosition = 'center';
         }
+        bookElement.style.backgroundPosition = book.backgroundPosition;
+        allBooks = allBooks.map(b => (b.id === book.id ? { ...b, backgroundPosition: book.backgroundPosition } : b));
+        localStorage.setItem('books', JSON.stringify(allBooks));
+      });
+    }
 
-        // Add Start Reading button for TBR books if desired (and Mark as Finished for currently reading)
-        if (book.tbr) {
-            const startReadingBtn = document.createElement('button');
-            startReadingBtn.textContent = 'Start Reading';
-            startReadingBtn.classList.add('start-reading-btn');
-            startReadingBtn.dataset.bookId = book.id;
-            startReadingBtn.addEventListener('click', () => openStartReadingModal(book.id));
-            bookElement.querySelector('.info-container').appendChild(startReadingBtn);
-        } else if (!book.finished) {
-            const markFinishedBtn = document.createElement('button');
-            markFinishedBtn.textContent = 'Mark as Finished';
-            markFinishedBtn.classList.add('finish-btn');
-            markFinishedBtn.dataset.bookId = book.id;
-            markFinishedBtn.addEventListener('click', () => openFinishReadingModal(book.id));
-            bookElement.querySelector('.info-container').appendChild(markFinishedBtn);
-        }
+    if (!book.finished) {
+      if (typeof book.currentPage !== 'number') book.currentPage = 0;
+      const progressContainer = document.createElement('div');
+      progressContainer.classList.add('progress-container');
+      const progressText = document.createElement('p');
+      progressText.classList.add('progress-text');
+      const progressPercentage = Math.round((book.currentPage / book.pages) * 100);
+      progressText.textContent = `${book.currentPage} / ${book.pages} (${progressPercentage}%)`;
+      progressContainer.appendChild(progressText);
+      const progressBarContainer = document.createElement('div');
+      progressBarContainer.classList.add('progress-bar-container');
+      const progressBar = document.createElement('div');
+      progressBar.classList.add('progress-bar');
+      progressBar.setAttribute('data-book-id', book.id);
+      const initialProgress = (book.currentPage / book.pages) * 100;
+      progressBar.style.width = `${initialProgress}%`;
+      progressBarContainer.appendChild(progressBar);
+      progressContainer.appendChild(progressBarContainer);
 
-        // More options button functionality
-        const moreOptionsBtn = bookElement.querySelector('.more-options-btn');
-        const dropdown = bookElement.querySelector('.dropdown');
+      const updateProgressButton = document.createElement('button');
+      updateProgressButton.textContent = 'Update Progress';
+      updateProgressButton.classList.add('update-progress-btn');
+      updateProgressButton.addEventListener('click', () => {
+        const newPage = prompt(`Enter your current page (out of ${book.pages}):`);
+        if (!newPage || isNaN(newPage) || newPage < 1 || newPage > book.pages) {
+          alert('Invalid page number. Please enter a number within range.');
+          return;
+        }
+        const updatedValue = parseInt(newPage, 10);
+        allBooks = allBooks.map(b => (b.id === book.id ? { ...b, currentPage: updatedValue } : b));
+        book.currentPage = updatedValue;
+        progressText.textContent = `${book.currentPage} / ${book.pages} (${Math.round((book.currentPage / book.pages) * 100)}%)`;
+        const newWidth = (book.currentPage / book.pages) * 100;
+        progressBar.style.width = `${newWidth}%`;
+        updateAppState();
+      });
 
-        // Define a function to toggle the dropdown state:
-        function toggleDropdown(dd) {
-        // If dd currently has the "hidden" class, remove it and add "dropdown-open"
-        if (dd.classList.contains('hidden')) {
-            dd.classList.remove('hidden');
-            dd.classList.add('dropdown-open');
-        }
-        // Else if it already is open, close it
-        else if (dd.classList.contains('dropdown-open')) {
-            dd.classList.remove('dropdown-open');
-            dd.classList.add('hidden');
-        }
-        // Otherwise, default to open it
-        else {
-            dd.classList.add('dropdown-open');
-        }
-        }
+      progressContainer.appendChild(updateProgressButton);
+      bookElement.appendChild(progressContainer);
+      currentlyReadingSection.appendChild(bookElement);
+    } else {
+      finishedBooksSection.appendChild(bookElement);
+    }
 
-        if (moreOptionsBtn && dropdown) {
-        // Ensure the dropdown starts hidden (in case it isn't already)
-        if (!dropdown.classList.contains('hidden')) {
-            dropdown.classList.add('hidden');
-        }
-        // Attach the click event listener
-        moreOptionsBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent event bubbling
-            toggleDropdown(dropdown);
-        });
-        }
+    if (book.tbr) {
+      const startReadingBtn = document.createElement('button');
+      startReadingBtn.textContent = 'Start Reading';
+      startReadingBtn.classList.add('start-reading-btn');
+      startReadingBtn.dataset.bookId = book.id;
+      startReadingBtn.addEventListener('click', () => openStartReadingModal(book.id));
+      bookElement.querySelector('.info-container').appendChild(startReadingBtn);
+    } else if (!book.finished) {
+      const markFinishedBtn = document.createElement('button');
+      markFinishedBtn.textContent = 'Mark as Finished';
+      markFinishedBtn.classList.add('finish-btn');
+      markFinishedBtn.dataset.bookId = book.id;
+      markFinishedBtn.addEventListener('click', () => openFinishReadingModal(book.id));
+      bookElement.querySelector('.info-container').appendChild(markFinishedBtn);
+    }
 
+    const moreOptionsBtn = bookElement.querySelector('.more-options-btn');
+    const dropdown = bookElement.querySelector('.dropdown');
+    function toggleDropdown(dd) {
+      if (dd.classList.contains('hidden')) {
+        dd.classList.remove('hidden'); dd.classList.add('dropdown-open');
+      } else if (dd.classList.contains('dropdown-open')) {
+        dd.classList.remove('dropdown-open'); dd.classList.add('hidden');
+      } else {
+        dd.classList.add('dropdown-open');
+      }
+    }
+    if (moreOptionsBtn && dropdown) {
+      if (!dropdown.classList.contains('hidden')) dropdown.classList.add('hidden');
+      moreOptionsBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleDropdown(dropdown); });
+    }
 
-        // Delete button functionality
-        const deleteButton = bookElement.querySelector('.delete-btn');
-        deleteButton.addEventListener('click', () => {
-            const bookId = deleteButton.dataset.bookId;
-            deleteBook(bookId);
-        });
-
-        // Edit button functionality
-        const editButton = bookElement.querySelector('.edit-btn');
-        editButton.addEventListener('click', () => {
-            openEditBookModal(book);
-        });
+    const deleteButton = bookElement.querySelector('.delete-btn');
+    deleteButton.addEventListener('click', () => {
+      const bookId = deleteButton.dataset.bookId;
+      deleteBook(bookId);
     });
+
+    const editButton = bookElement.querySelector('.edit-btn');
+    editButton.addEventListener('click', () => { openEditBookModal(book); });
+});
 
     attachStartReadingListeners();
     attachFinishButtonListeners();
@@ -944,45 +970,61 @@ function deleteBook(bookId) {
     }
 }
 
-    toBeReadBtn.addEventListener('click', () => {
-        toBeReadSection.classList.add('active');
-        currentlyReadingSection.classList.remove('active');
-        finishedBooksSection.classList.remove('active');
-    
-        toBeReadBtn.classList.add('active');
-        currentlyReadingBtn.classList.remove('active');
-        finishedBooksBtn.classList.remove('active');
-    });
-    
-    currentlyReadingBtn.addEventListener('click', () => {
-        currentlyReadingSection.classList.add('active');
-        toBeReadSection.classList.remove('active');
-        finishedBooksSection.classList.remove('active');
-    
-        currentlyReadingBtn.classList.add('active');
-        toBeReadBtn.classList.remove('active');
-        finishedBooksBtn.classList.remove('active');
-    });
-    
-    finishedBooksBtn.addEventListener('click', () => {
-        finishedBooksSection.classList.add('active');
-        currentlyReadingSection.classList.remove('active');
-        toBeReadSection.classList.remove('active');
-    
-        finishedBooksBtn.classList.add('active');
-        currentlyReadingBtn.classList.remove('active');
-        toBeReadBtn.classList.remove('active');
-    });
-    
+toBeReadBtn.addEventListener('click', () => {
+    document.querySelector('.container').style.display = 'block';
+    document.getElementById('statsSection').style.display = 'none';
+    toBeReadSection.classList.add('active');
+    currentlyReadingSection.classList.remove('active');
+    finishedBooksSection.classList.remove('active');
+    toBeReadSection.style.display = 'block';
+    currentlyReadingSection.style.display = 'none';
+    finishedBooksSection.style.display = 'none';
+    toBeReadBtn.classList.add('active');
+    currentlyReadingBtn.classList.remove('active');
+    finishedBooksBtn.classList.remove('active');
+});
 
-    finishedBooksBtn.addEventListener('click', () => {
-        finishedBooksSection.classList.add('active');
-        currentlyReadingSection.classList.remove('active');
-    });
+currentlyReadingBtn.addEventListener('click', () => {
+    document.querySelector('.container').style.display = 'block';
+    document.getElementById('statsSection').style.display = 'none';
+    currentlyReadingSection.classList.add('active');
+    toBeReadSection.classList.remove('active');
+    finishedBooksSection.classList.remove('active');
+    currentlyReadingSection.style.display = 'block';
+    toBeReadSection.style.display = 'none';
+    finishedBooksSection.style.display = 'none';
+    currentlyReadingBtn.classList.add('active');
+    toBeReadBtn.classList.remove('active');
+    finishedBooksBtn.classList.remove('active');
+});
 
-    updateAppState(); 
-    
-    populateYearDropdown();
+finishedBooksBtn.addEventListener('click', () => {
+    document.querySelector('.container').style.display = 'block';
+    document.getElementById('statsSection').style.display = 'none';
+    finishedBooksSection.classList.add('active');
+    currentlyReadingSection.classList.remove('active');
+    toBeReadSection.classList.remove('active');
+    finishedBooksSection.style.display = 'block';
+    currentlyReadingSection.style.display = 'none';
+    toBeReadSection.style.display = 'none';
+    finishedBooksBtn.classList.add('active');
+    currentlyReadingBtn.classList.remove('active');
+    toBeReadBtn.classList.remove('active');
+});
+
+document.getElementById('statsBtn').addEventListener('click', () => {
+    document.getElementById('toBeReadSection').style.display = 'none';
+    document.getElementById('currentlyReadingSection').style.display = 'none';
+    document.getElementById('finishedBooksSection').style.display = 'none';
+    document.getElementById('statsSection').style.display = 'block';
+    document.querySelector('.container').style.display = 'none';
+    populateMonthSelect();
+    calculateStats();
+});        
+
+
+updateAppState(); 
+populateYearDropdown();
 loadGoal();
 
 document.getElementById('yearSelect').addEventListener('change', (e) => {
@@ -990,8 +1032,6 @@ document.getElementById('yearSelect').addEventListener('change', (e) => {
     updateAppState();
     loadGoal();  // Load goal for the selected year
 });
-
-
 
 function saveUpdatedBook(book) {
 let books = JSON.parse(localStorage.getItem('books')) || [];
@@ -1070,12 +1110,15 @@ form.addEventListener('submit', handleStartReadingSubmit);
 
 // Open the modal (attach to a single button now)
 document.getElementById('openAddBookModal').addEventListener('click', () => {
-    addBookModal.style.display = 'flex';
-    addBookModal.classList.add('active');
-    document.getElementById('readingFields').classList.add('hidden');
-    document.getElementById('finishedFields').classList.add('hidden');
-
-    // Reset the search fields:
+    // Reset modal scroll to top
+    addBookModal.scrollTop = 0;
+    // Reset mode: default to Search Online
+    searchOnlineModeBtn.classList.add('active');
+    manualEntryModeBtn.classList.remove('active');
+    searchOnlineContainer.style.display = 'block';
+    manualEntryContainer.style.display = 'none';
+    
+    // Reset search fields:
     const searchTitleInput = document.getElementById('searchTitle');
     const searchTitleResults = document.getElementById('titleSearchResults');
     if (searchTitleInput) {
@@ -1085,8 +1128,6 @@ document.getElementById('openAddBookModal').addEventListener('click', () => {
         searchTitleResults.innerHTML = "";
         searchTitleResults.classList.add("hidden");
     }
-    
-    // Similarly for searchAuthor:
     const searchAuthorInput = document.getElementById('searchAuthor');
     const searchAuthorResults = document.getElementById('authorSearchResults');
     if (searchAuthorInput) {
@@ -1096,6 +1137,10 @@ document.getElementById('openAddBookModal').addEventListener('click', () => {
         searchAuthorResults.innerHTML = "";
         searchAuthorResults.classList.add("hidden");
     }
+    
+    // Open modal
+    addBookModal.style.display = 'flex';
+    addBookModal.classList.add('active');
 });
 
 // Book types with radio buttons
@@ -1527,7 +1572,8 @@ reorderToggleButton.addEventListener('click', () => {
 
 setupSearchHandler("searchTitle", "titleSearchResults", populateToBeReadFields);
 setupSearchHandler("searchAuthor", "authorSearchResults", populateToBeReadFields, "inauthor");
-setupISBNSearchHandler("searchISBN", "isbnSearchResults", populateToBeReadFields);
+setupISBNSearchHandler("searchISBN", "isbnSearchResults", handleISBNSearchResult);
+
 
 populateYearDropdown(); // Populate the dropdown with available years
 loadGoal(); // Load the goal for the current year
@@ -1586,26 +1632,51 @@ bottomSort.addEventListener('click', () => {
   // Call your sort function for finished books:
   sortFinishedBooks();
 });
+
 function sortFinishedBooks() {
-  // Example sorting function for finished books:
-  let finishedBooks = allBooks.filter(book => book.finished);
-  if (finishedSortOrder === 'desc') {
-    finishedBooks.sort((a, b) => new Date(b.endDate) - new Date(a.endDate));
-  } else {
-    finishedBooks.sort((a, b) => new Date(a.endDate) - new Date(b.endDate));
-  }
-  let nonFinishedBooks = allBooks.filter(book => !book.finished);
-  // For demonstration, finished books come first if 'desc'
-  allBooks = (finishedSortOrder === 'desc') 
-             ? finishedBooks.concat(nonFinishedBooks)
-             : nonFinishedBooks.concat(finishedBooks);
-  updateAppState();
-  console.log("Finished books sorted in", finishedSortOrder, "order.");
+    console.log("sortFinishedBooks called");
+    // Filter finished books.
+    let finishedBooks = allBooks.filter(book => book.finished);
+  
+    // Log the end date and its timestamp for each finished book.
+    finishedBooks.forEach(book => {
+      console.log(`Book ID: ${book.id} - End Date: ${book.endDate} - Timestamp: ${new Date(book.endDate).getTime()}`);
+    });
+  
+    if (finishedSortOrder === 'desc') {
+      finishedBooks.sort((a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime());
+    } else {
+      finishedBooks.sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime());
+    }
+  
+    let nonFinishedBooks = allBooks.filter(book => !book.finished);
+    allBooks = (finishedSortOrder === 'desc') 
+               ? finishedBooks.concat(nonFinishedBooks)
+               : nonFinishedBooks.concat(finishedBooks);
+    updateAppState();
+    console.log("Finished books sorted in", finishedSortOrder, "order.");
+}  
+
+function sortBooks() {
+    if (currentSection === 'finished') {
+        books.sort((a, b) => {
+            // Parse dates — handle missing or invalid dates safely
+            const dateA = a.finishedDate ? new Date(a.finishedDate) : new Date(0);
+            const dateB = b.finishedDate ? new Date(b.finishedDate) : new Date(0);
+
+            if (sortOrderAsc) {
+                // Oldest finished first
+                return dateA - dateB;
+            } else {
+                // Newest finished first
+                return dateB - dateA;
+            }
+        });
+    }
 }
 
 // --- Toggle View Button ---
 // Toggle between grid and list view for the active section.
-let currentView = "grid"; // Default view
 bottomToggle.addEventListener('click', () => {
   console.log("Bottom Toggle clicked");
   // Find the active section (assuming IDs: toBeReadSection, currentlyReadingSection, finishedBooksSection)
@@ -1643,18 +1714,49 @@ bottomSection.addEventListener('click', () => {
 document.querySelectorAll('.section-dropdown .section-option').forEach(option => {
   option.addEventListener('click', () => {
     const targetSection = option.getAttribute('data-section');
-    console.log("Switching to section:", targetSection);
-    // Remove 'active' from all three sections.
-    document.getElementById('toBeReadSection').classList.remove('active');
-    document.getElementById('currentlyReadingSection').classList.remove('active');
-    document.getElementById('finishedBooksSection').classList.remove('active');
-    // Add 'active' to the selected section.
-    document.getElementById(targetSection).classList.add('active');
-    // Do not hide the bottom bar (as per your preference).
-    // Update the visibility of the Sort Books button (only for Finished Books).
-    updateSortButtonVisibility();
-    // Hide the dropdown after selection.
+
+    // Hide dropdown after selection
     sectionDropdown.classList.add('hidden');
+
+    if (targetSection === 'statsSection') {
+      // Show Stats, hide the book container
+      document.querySelector('.container').style.display = 'none';
+      document.getElementById('statsSection').style.display = 'block';
+
+      // (Re)build stats UI
+      populateMonthSelect();
+      calculateStats();
+
+      // Update Sort button visibility (no sort in Stats)
+      updateSortButtonVisibility();
+      return;
+    }
+
+    // Otherwise, show the book sections container and hide Stats
+    document.querySelector('.container').style.display = 'block';
+    document.getElementById('statsSection').style.display = 'none';
+
+    // Toggle which book section is active/visible
+    const tbr = document.getElementById('toBeReadSection');
+    const cr  = document.getElementById('currentlyReadingSection');
+    const fin = document.getElementById('finishedBooksSection');
+
+    tbr.classList.remove('active');
+    cr.classList.remove('active');
+    fin.classList.remove('active');
+
+    // Hide all first
+    tbr.style.display = 'none';
+    cr.style.display = 'none';
+    fin.style.display = 'none';
+
+    // Show the chosen one
+    const sectionEl = document.getElementById(targetSection);
+    sectionEl.classList.add('active');
+    sectionEl.style.display = 'block';
+
+    // Update Sort button visibility (only for Finished)
+    updateSortButtonVisibility();
   });
 });
 
@@ -1672,6 +1774,28 @@ bottomAdd.addEventListener('click', () => {
     console.log("Add Book modal opened via bottom bar");
   }
 });
+
+const selectCoverFileButton = document.getElementById('selectCoverFileButton');
+const coverFileInput = document.getElementById('coverFileInput');
+
+if (selectCoverFileButton && coverFileInput) {
+  selectCoverFileButton.addEventListener('click', () => {
+    coverFileInput.click();
+  });
+
+  coverFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const dataUrl = event.target.result;
+        document.getElementById('addBookCover').value = dataUrl;
+        document.getElementById('coverPreview').src = dataUrl;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+}
 
 // Helper function to convert "HH:MM" into "HH hours and MM minutes"
 function convertTimeFormat(timeStr) {
@@ -1773,6 +1897,16 @@ function openBookDetailsModal(book) {
         modalButtonsContainer.appendChild(markFinishedBtn);
     }
     // (For finished books, no extra button is added.)
+    }
+
+    // Add "See Recommendations" button to the modal.
+    const recButton = document.createElement('button');
+    recButton.innerText = 'See Recommendations';
+    recButton.addEventListener('click', () => {
+    showRecommendations(book);
+    });
+    if (modalButtonsContainer) {
+    modalButtonsContainer.appendChild(recButton);
     }
 
     // Show the modal
@@ -2100,4 +2234,725 @@ function openReadingFromSearchModal() {
     modal.style.display = 'flex';
 }  
 
-});  
+// ===== Stats Calculation and Chart Rendering =====
+function updateStats() {
+    // Filter finished books
+    const finishedBooks = allBooks.filter(book => book.finished);
+
+    // Initialize accumulators
+    let totalTimeMinutes = 0;  // We'll convert readingTime to minutes if possible
+    let totalPages = 0;
+    let pagesPerHourSum = 0;
+    let countPagesPerHour = 0;
+
+    // We'll also group finished books by month (e.g., "2023-01") for the bar charts.
+    let pagesByMonth = {};
+
+    finishedBooks.forEach(book => {
+        // Assume book.timeToRead is in "HH:MM" format.
+        if (book.timeToRead && book.timeToRead.includes(':')) {
+            const [hrs, mins] = book.timeToRead.split(':').map(Number);
+            totalTimeMinutes += hrs * 60 + mins;
+        }
+        totalPages += book.pages;  // Sum pages read (assuming pages is total pages of the book)
+        if (book.pagesPerHour && !isNaN(book.pagesPerHour)) {
+            pagesPerHourSum += Number(book.pagesPerHour);
+            countPagesPerHour++;
+        }
+        // Group pages by month from book.endDate
+        if (book.endDate) {
+            const d = new Date(book.endDate);
+            const monthKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            if (!pagesByMonth[monthKey]) {
+                pagesByMonth[monthKey] = 0;
+            }
+            pagesByMonth[monthKey] += book.pages;
+        }
+    });
+
+    // Calculate averages
+    const avgPagesPerHour = countPagesPerHour > 0 ? (pagesPerHourSum / countPagesPerHour).toFixed(1) : 0;
+
+    // Update DOM numerical values
+    document.getElementById('totalReadingTimeValue').textContent = totalTimeMinutes + " minutes";
+    document.getElementById('totalPagesReadValue').textContent = totalPages;
+    document.getElementById('avgPagesPerHourValue').textContent = avgPagesPerHour;
+
+    // Prepare data for the bar chart (for Total Pages Read per Month)
+    const months = Object.keys(pagesByMonth).sort();
+    const pagesData = months.map(month => pagesByMonth[month]);
+
+    // Render bar chart using Chart.js in the stat box for pages read
+    // First, get the canvas element:
+    const ctx = document.getElementById('pagesReadChart').getContext('2d');
+    // If a chart already exists, destroy it:
+    if (window.pagesReadChartInstance) {
+        window.pagesReadChartInstance.destroy();
+    }
+    window.pagesReadChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'Pages Read',
+                data: pagesData,
+                backgroundColor: '#4b8ed7',
+                borderColor: '#3a6ea5',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // (Optional) You can also add similar charts for other stats if desired.
+}
+
+document.querySelectorAll('.stats-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        // Remove active from all, add active to clicked one.
+        document.querySelectorAll('.stats-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        // (Here you would add your filtering logic. For now, we’ll just log.)
+        console.log("Stats filter selected:", btn.dataset.filter);
+        // You might recalculate stats based on filter criteria here.
+    });
+});
+
+function createBarChart(canvasId, dataArray, label) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+    return new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+            datasets: [{
+                label: label,
+                data: dataArray,
+                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function populateMonthSelect() {
+    const monthSelect = document.getElementById('monthSelect');
+    if (!monthSelect) return;
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    monthSelect.innerHTML = '';
+    months.forEach((month, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = month;
+        monthSelect.appendChild(option);
+    });
+    monthSelect.value = selectedMonth;
+}
+
+function calculateStats() {
+    const finishedBooks = allBooks.filter(book => 
+        book.finished && new Date(book.endDate).getFullYear() === currentYear
+    );
+    const readingBooks = allBooks.filter(book => 
+        !book.tbr && !book.finished && (book.startDate && new Date(book.startDate).getFullYear() === currentYear)
+    );
+
+    if (finishedBooks.length === 0 && readingBooks.length === 0) {
+        resetStats();
+        return;
+    }
+
+    document.getElementById('statsYear').textContent = currentYear;
+
+    ['pages', 'time', 'pph'].forEach(category => {
+        let filteredFinished = finishedBooks;
+        let filteredReading = readingBooks;
+
+        if (currentMode === 'month') {
+            filteredFinished = finishedBooks.filter(book => new Date(book.endDate).getMonth() === selectedMonth);
+            filteredReading = readingBooks.filter(book => new Date(book.startDate).getMonth() === selectedMonth);
+        }
+
+        if (category === 'pages') calculatePagesStats(filteredFinished, filteredReading);
+        else if (category === 'time') calculateTimeStats(filteredFinished);
+        else if (category === 'pph') calculatePPHStats(filteredFinished);
+    });
+}
+
+function calculatePagesStats(finishedBooks, readingBooks) {
+    let totalPages = finishedBooks.reduce((sum, book) => sum + book.pages, 0);
+    totalPages += readingBooks.reduce((sum, book) => sum + (book.currentPage || 0), 0);
+    let pagesByMonth = Array(12).fill(0);
+    finishedBooks.forEach(book => pagesByMonth[new Date(book.endDate).getMonth()] += book.pages);
+    readingBooks.forEach(book => pagesByMonth[new Date(book.startDate).getMonth()] += book.currentPage || 0);
+
+    const avgPages = finishedBooks.length ? (finishedBooks.reduce((sum, book) => sum + book.pages, 0) / finishedBooks.length).toFixed(1) : 0;
+
+    let leastPagesBook = null;
+    let mostPagesBook = null;
+    finishedBooks.forEach(book => {
+        if (!leastPagesBook || book.pages < leastPagesBook.pages) leastPagesBook = book;
+        if (!mostPagesBook || book.pages > mostPagesBook.pages) mostPagesBook = book;
+    });
+
+    const totalPagesElement = document.querySelector('#stat-pages-total .stat-value');
+    const avgPagesElement = document.querySelector('#stat-pages-average .stat-value');
+    const totalPagesBox = document.querySelector('#stat-pages-total');
+    const avgPagesBox = document.querySelector('#stat-pages-average');
+    const totalPagesHeader = document.querySelector('#stat-pages-total h3');
+    const avgPagesHeader = document.querySelector('#stat-pages-average h3');
+    const leastItemPages = document.querySelector('#stat-pages-least-most .least-most-item:first-child');
+    const mostItemPages = document.querySelector('#stat-pages-least-most .least-most-item:last-child');
+
+    if (totalPagesElement) totalPagesElement.textContent = totalPages;
+    if (avgPagesElement) avgPagesElement.textContent = avgPages;
+    if (leastItemPages) {
+        leastItemPages.querySelector('.stat-value').textContent = leastPagesBook ? leastPagesBook.pages : '0';
+        leastItemPages.querySelector('.least-cover').src = leastPagesBook ? leastPagesBook.cover || './images/placeholder.jpeg' : './images/placeholder.jpeg';
+        leastItemPages.dataset.tooltip = leastPagesBook ? `${leastPagesBook.title}\n${leastPagesBook.author}\n${leastPagesBook.pages} pages` : 'N/A';
+    }
+    if (mostItemPages) {
+        mostItemPages.querySelector('.stat-value').textContent = mostPagesBook ? mostPagesBook.pages : '0';
+        mostItemPages.querySelector('.most-cover').src = mostPagesBook ? mostPagesBook.cover || './images/placeholder.jpeg' : './images/placeholder.jpeg';
+        mostItemPages.dataset.tooltip = mostPagesBook ? `${mostPagesBook.title}\n${mostPagesBook.author}\n${mostPagesBook.pages} pages` : 'N/A';
+    }
+
+    if (currentMode === 'year') {
+        if (totalPagesBox) totalPagesBox.classList.remove('month-mode');
+        if (avgPagesBox) avgPagesBox.classList.remove('month-mode');
+        if (totalPagesHeader) totalPagesHeader.textContent = 'Pages Read';
+        if (avgPagesHeader) avgPagesHeader.textContent = 'Pages Read';
+        const totalChart = document.querySelector('#stat-pages-total .stat-chart');
+        const avgChart = document.querySelector('#stat-pages-average .stat-chart');
+        if (currentStatsView === 'graph') {
+            if (totalChart) totalChart.style.display = 'block';
+            if (avgChart) avgChart.style.display = 'block';
+            updateCharts('chart-pages-total', pagesByMonth, 'Pages Read');
+            updateCharts('chart-pages-average', pagesByMonth.map(val => finishedBooks.length ? (val / finishedBooks.length).toFixed(1) : 0), 'Avg Pages');
+            totalPagesBox.querySelector('.stat-list')?.remove();
+            avgPagesBox.querySelector('.stat-list')?.remove();
+        } else {
+            if (totalChart) totalChart.style.display = 'none';
+            if (avgChart) avgChart.style.display = 'none';
+            updateYearListInBox(totalPagesBox, pagesByMonth, 'pages');
+            updateYearListInBox(avgPagesBox, pagesByMonth.map(val => finishedBooks.length ? (val / finishedBooks.length).toFixed(1) : 0), 'pages');
+        }
+    } else { 
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                            'July', 'August', 'September', 'October', 'November', 'December'];
+        // Add a CSS class so the stat boxes get the fixed height
+        if (totalPagesBox) totalPagesBox.classList.add('month-mode');
+        if (avgPagesBox) avgPagesBox.classList.add('month-mode');
+        
+        // Create or update the month label for total pages
+        let monthLabelTotal = totalPagesBox.querySelector('.month-label');
+        if (!monthLabelTotal) {
+            monthLabelTotal = document.createElement('div');
+            monthLabelTotal.classList.add('month-label');
+            // Insert it at the top of the box
+            totalPagesBox.insertBefore(monthLabelTotal, totalPagesBox.firstChild);
+        }
+        monthLabelTotal.textContent = monthNames[selectedMonth];
+        
+        // Do the same for the average pages box
+        let monthLabelAverage = avgPagesBox.querySelector('.month-label');
+        if (!monthLabelAverage) {
+            monthLabelAverage = document.createElement('div');
+            monthLabelAverage.classList.add('month-label');
+            avgPagesBox.insertBefore(monthLabelAverage, avgPagesBox.firstChild);
+        }
+        monthLabelAverage.textContent = monthNames[selectedMonth];
+        
+        // Update the stat values
+        if (totalPagesElement) totalPagesElement.textContent = `${pagesByMonth[selectedMonth]}`;
+        if (avgPagesElement) avgPagesElement.textContent = `${(pagesByMonth[selectedMonth] / (finishedBooks.length || 1)).toFixed(1)}`;
+        
+        // Hide the canvas charts if in list view mode:
+        document.querySelector('#stat-pages-total .stat-chart').style.display = 'none';
+        document.querySelector('#stat-pages-average .stat-chart').style.display = 'none';
+        
+        // Optionally remove any year-list if present:
+        totalPagesBox.querySelector('.stat-list')?.remove();
+        avgPagesBox.querySelector('.stat-list')?.remove();
+    }    
+}
+
+function calculateTimeStats(finishedBooks) {
+    let totalTime = 0;
+    let timeByMonth = Array(12).fill(0);
+    finishedBooks.forEach(book => {
+        if (book.timeToRead && book.timeToRead.includes(':')) {
+            const [hrs, mins] = book.timeToRead.split(':').map(Number);
+            const minutes = hrs * 60 + mins;
+            totalTime += minutes;
+            timeByMonth[new Date(book.endDate).getMonth()] += minutes;
+        }
+    });
+
+    const avgTime = finishedBooks.length ? Math.round(totalTime / finishedBooks.length) : 0;
+    const totalHours = Math.floor(totalTime / 60);
+    const totalMins = totalTime % 60;
+    const totalDisplay = totalHours > 0 ? `${totalHours} hours and ${totalMins} minutes` : `${totalMins} minutes`;
+    const avgHours = Math.floor(avgTime / 60);
+    const avgMins = avgTime % 60;
+    const avgDisplay = avgHours > 0 ? `${avgHours} hours and ${avgMins} minutes` : `${avgMins} minutes`;
+
+    let leastTimeBook = null;
+    let mostTimeBook = null;
+    finishedBooks.forEach(book => {
+        if (book.timeToRead && book.timeToRead.includes(':')) {
+            const minutes = parseInt(book.timeToRead.split(':')[0]) * 60 + parseInt(book.timeToRead.split(':')[1]);
+            if (!leastTimeBook || minutes < (leastTimeBook.timeToRead ? parseInt(leastTimeBook.timeToRead.split(':')[0]) * 60 + parseInt(leastTimeBook.timeToRead.split(':')[1]) : Infinity)) leastTimeBook = book;
+            if (!mostTimeBook || minutes > (mostTimeBook.timeToRead ? parseInt(mostTimeBook.timeToRead.split(':')[0]) * 60 + parseInt(mostTimeBook.timeToRead.split(':')[1]) : -Infinity)) mostTimeBook = book;
+        }
+    });
+
+    const totalTimeElement = document.querySelector('#stat-time-total .stat-value');
+    const avgTimeElement = document.querySelector('#stat-time-average .stat-value');
+    const totalTimeBox = document.querySelector('#stat-time-total');
+    const avgTimeBox = document.querySelector('#stat-time-average');
+    const totalTimeHeader = document.querySelector('#stat-time-total small');
+    const avgTimeHeader = document.querySelector('#stat-time-average h3');
+    const leastItemTime = document.querySelector('#stat-time-least-most .least-most-item:first-child');
+    const mostItemTime = document.querySelector('#stat-time-least-most .least-most-item:last-child');
+
+    if (totalTimeElement) totalTimeElement.textContent = totalDisplay;
+    if (avgTimeElement) avgTimeElement.textContent = avgDisplay;
+    if (leastItemTime && leastTimeBook) {
+        const leastMins = parseInt(leastTimeBook.timeToRead.split(':')[0]) * 60 + parseInt(leastTimeBook.timeToRead.split(':')[1]);
+        const leastHours = Math.floor(leastMins / 60);
+        const leastRemainder = leastMins % 60;
+        leastItemTime.querySelector('.stat-value').textContent = leastHours > 0 ? `${leastHours} hours and ${leastRemainder} minutes` : `${leastRemainder} minutes`;
+        leastItemTime.querySelector('.least-cover').src = leastTimeBook.cover || './images/placeholder.jpeg';
+        leastItemTime.dataset.tooltip = `${leastTimeBook.title}\n${leastTimeBook.author}\n${leastTimeBook.pages} pages`;
+    } else if (leastItemTime) {
+        leastItemTime.querySelector('.stat-value').textContent = '0';
+        leastItemTime.querySelector('.least-cover').src = './images/placeholder.jpeg';
+        leastItemTime.dataset.tooltip = 'N/A';
+    }
+    if (mostItemTime && mostTimeBook) {
+        const mostMins = parseInt(mostTimeBook.timeToRead.split(':')[0]) * 60 + parseInt(mostTimeBook.timeToRead.split(':')[1]);
+        const mostHours = Math.floor(mostMins / 60);
+        const mostRemainder = mostMins % 60;
+        mostItemTime.querySelector('.stat-value').textContent = mostHours > 0 ? `${mostHours} hours and ${mostRemainder} minutes` : `${mostRemainder} minutes`;
+        mostItemTime.querySelector('.most-cover').src = mostTimeBook.cover || './images/placeholder.jpeg';
+        mostItemTime.dataset.tooltip = `${mostTimeBook.title}\n${mostTimeBook.author}\n${mostTimeBook.pages} pages`;
+    } else if (mostItemTime) {
+        mostItemTime.querySelector('.stat-value').textContent = '0';
+        mostItemTime.querySelector('.most-cover').src = './images/placeholder.jpeg';
+        mostItemTime.dataset.tooltip = 'N/A';
+    }
+
+    if (currentMode === 'year') {
+        if (totalTimeBox) totalTimeBox.classList.remove('month-mode');
+        if (avgTimeBox) avgTimeBox.classList.remove('month-mode');
+        if (totalTimeHeader) totalTimeHeader.textContent = 'Reading Time';
+        if (avgTimeHeader) avgTimeHeader.textContent = 'Reading Time';
+        const totalChart = document.querySelector('#stat-time-total .stat-chart');
+        const avgChart = document.querySelector('#stat-time-average .stat-chart');
+        if (currentStatsView === 'graph') {
+            if (totalChart) totalChart.style.display = 'block';
+            if (avgChart) avgChart.style.display = 'block';
+            updateCharts('chart-time-total', timeByMonth, 'Reading Time (min)');
+            updateCharts('chart-time-average', timeByMonth.map(val => finishedBooks.length ? (val / finishedBooks.length).toFixed(1) : 0), 'Avg Time (min)');
+            totalTimeBox.querySelector('.stat-list')?.remove();
+            avgTimeBox.querySelector('.stat-list')?.remove();
+        } else {
+            if (totalChart) totalChart.style.display = 'none';
+            if (avgChart) avgChart.style.display = 'none';
+            updateYearListInBox(totalTimeBox, timeByMonth, 'min');
+            updateYearListInBox(avgTimeBox, timeByMonth.map(val => finishedBooks.length ? (val / finishedBooks.length).toFixed(1) : 0), 'min');
+        }
+    } else {
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                            'July', 'August', 'September', 'October', 'November', 'December'];
+        // Add a CSS class to enforce fixed height (if not already)
+        if (totalTimeBox) totalTimeBox.classList.add('month-mode');
+        if (avgTimeBox) avgTimeBox.classList.add('month-mode');
+      
+        // Set the header text to the month name for both total and average boxes
+        if (totalTimeHeader) totalTimeHeader.textContent = monthNames[selectedMonth];
+        if (avgTimeHeader) avgTimeHeader.textContent = monthNames[selectedMonth];
+      
+        // Set the value to the month's value
+        if (totalTimeElement) totalTimeElement.textContent = `${timeByMonth[selectedMonth]} min`;
+        if (avgTimeElement) avgTimeElement.textContent = `${(timeByMonth[selectedMonth] / (finishedBooks.length || 1)).toFixed(0)} min`;
+      
+        // Hide the charts when in list mode
+        const totalChart = document.querySelector('#stat-time-total .stat-chart');
+        const avgChart = document.querySelector('#stat-time-average .stat-chart');
+        if (totalChart) totalChart.style.display = 'none';
+        if (avgChart) avgChart.style.display = 'none';
+      
+        // Remove any year-list (if present)
+        totalTimeBox.querySelector('.stat-list')?.remove();
+        avgTimeBox.querySelector('.stat-list')?.remove();
+      }
+}
+
+function calculatePPHStats(finishedBooks) {
+    let totalPPH = 0;
+    let pphByMonth = Array(12).fill(0);
+    let pphCount = 0;
+    finishedBooks.forEach(book => {
+        if (book.pagesPerHour) {
+            totalPPH += book.pagesPerHour;
+            pphCount++;
+            pphByMonth[new Date(book.endDate).getMonth()] += book.pagesPerHour;
+        }
+    });
+
+    const avgPPH = pphCount ? (totalPPH / pphCount).toFixed(1) : 0;
+
+    let leastPPHBook = null;
+    let mostPPHBook = null;
+    finishedBooks.forEach(book => {
+        if (book.pagesPerHour) {
+            if (!leastPPHBook || book.pagesPerHour < leastPPHBook.pagesPerHour) leastPPHBook = book;
+            if (!mostPPHBook || book.pagesPerHour > mostPPHBook.pagesPerHour) mostPPHBook = book;
+        }
+    });
+
+    const avgPPHElement = document.querySelector('#stat-pph-average .stat-value');
+    const avgPPHBox = document.querySelector('#stat-pph-average');
+    const avgPPHHeader = document.querySelector('#stat-pph-average h3');
+    const leastItemPPH = document.querySelector('#stat-pph-least-most .least-most-item:first-child');
+    const mostItemPPH = document.querySelector('#stat-pph-least-most .least-most-item:last-child');
+
+    if (avgPPHElement) avgPPHElement.textContent = avgPPH;
+    if (leastItemPPH) {
+        leastItemPPH.querySelector('.stat-value').textContent = leastPPHBook ? leastPPHBook.pagesPerHour : '0';
+        leastItemPPH.querySelector('.least-cover').src = leastPPHBook ? leastPPHBook.cover || './images/placeholder.jpeg' : './images/placeholder.jpeg';
+        leastItemPPH.dataset.tooltip = leastPPHBook ? `${leastPPHBook.title}\n${leastPPHBook.author}\n${leastPPHBook.pages} pages` : 'N/A';
+    }
+    if (mostItemPPH) {
+        mostItemPPH.querySelector('.stat-value').textContent = mostPPHBook ? mostPPHBook.pagesPerHour : '0';
+        mostItemPPH.querySelector('.most-cover').src = mostPPHBook ? mostPPHBook.cover || './images/placeholder.jpeg' : './images/placeholder.jpeg';
+        mostItemPPH.dataset.tooltip = mostPPHBook ? `${mostPPHBook.title}\n${mostPPHBook.author}\n${mostPPHBook.pages} pages` : 'N/A';
+    }
+
+    if (currentMode === 'year') {
+        if (avgPPHBox) avgPPHBox.classList.remove('month-mode');
+        if (avgPPHHeader) avgPPHHeader.textContent = 'Pages per Hour';
+        const avgChart = document.querySelector('#stat-pph-average .stat-chart');
+        if (currentStatsView === 'graph') {
+            if (avgChart) avgChart.style.display = 'block';
+            updateCharts('chart-pph-average', pphByMonth.map(val => pphCount ? (val / pphCount).toFixed(1) : 0), 'Avg PPH');
+            avgPPHBox.querySelector('.stat-list')?.remove();
+        } else {
+            if (avgChart) avgChart.style.display = 'none';
+            updateYearListInBox(avgPPHBox, pphByMonth.map(val => pphCount ? (val / pphCount).toFixed(1) : 0), '');
+        }
+    } else {
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                            'July', 'August', 'September', 'October', 'November', 'December'];
+        if (avgPPHBox) avgPPHBox.classList.add('month-mode');
+      
+        // Set headers to the month name
+       if (avgPPHHeader) avgPPHHeader.textContent = monthNames[selectedMonth];
+      
+        if (avgPPHElement) avgPPHElement.textContent = `${(pphByMonth[selectedMonth] / (pphCount || 1)).toFixed(1)}`;
+      
+        // Hide the chart canvases
+        const avgChart = document.querySelector('#stat-pph-average .stat-chart');
+        if (avgChart) avgChart.style.display = 'none';
+      
+        // Remove any existing year list
+        avgPPHBox.querySelector('.stat-list')?.remove();
+      }
+}
+
+function resetStats() {
+    const categories = ['pages', 'time', 'pph'];
+    categories.forEach(cat => {
+        const totalElement = document.querySelector(`#stat-${cat}-total .stat-value`);
+        const avgElement = document.querySelector(`#stat-${cat}-average .stat-value`);
+        const totalBox = document.querySelector(`#stat-${cat}-total`);
+        const avgBox = document.querySelector(`#stat-${cat}-average`);
+        const totalHeader = document.querySelector(`#stat-${cat}-total h3`);
+        const avgHeader = document.querySelector(`#stat-${cat}-average h3`);
+        const leastItem = document.querySelector(`#stat-${cat}-least-most .least-most-item:first-child`);
+        const mostItem = document.querySelector(`#stat-${cat}-least-most .least-most-item:last-child`);
+        const totalChart = document.querySelector(`#stat-${cat}-total .stat-chart`);
+        const avgChart = document.querySelector(`#stat-${cat}-average .stat-chart`);
+
+        if (totalElement) totalElement.textContent = cat === 'time' ? '0 min' : '0';
+        if (avgElement) avgElement.textContent = cat === 'time' ? '0 min' : '0';
+        if (totalBox) totalBox.classList.remove('month-mode');
+        if (avgBox) avgBox.classList.remove('month-mode');
+        if (totalHeader) totalHeader.textContent = cat === 'pages' ? 'Pages Read' : cat === 'time' ? 'Reading Time' : 'Pages per Hour';
+        if (avgHeader) avgHeader.textContent = cat === 'pages' ? 'Pages Read' : cat === 'time' ? 'Reading Time' : 'Pages per Hour';
+        if (leastItem) {
+            leastItem.querySelector('.stat-value').textContent = '0';
+            leastItem.querySelector('.least-cover').src = './images/placeholder.jpeg';
+            leastItem.dataset.tooltip = 'N/A';
+        }
+        if (mostItem) {
+            mostItem.querySelector('.stat-value').textContent = '0';
+            mostItem.querySelector('.most-cover').src = './images/placeholder.jpeg';
+            mostItem.dataset.tooltip = 'N/A';
+        }
+        if (totalChart) totalChart.style.display = currentStatsView === 'graph' ? 'block' : 'none';
+        if (avgChart) avgChart.style.display = currentStatsView === 'graph' ? 'block' : 'none';
+        totalBox.querySelector('.stat-list')?.remove();
+        avgBox.querySelector('.stat-list')?.remove();
+        if (currentStatsView === 'graph') {
+            updateCharts(`chart-${cat}-total`, Array(12).fill(0), cat === 'pages' ? 'Pages Read' : cat === 'time' ? 'Reading Time (min)' : 'Pages Per Hour');
+            updateCharts(`chart-${cat}-average`, Array(12).fill(0), cat === 'pages' ? 'Avg Pages' : cat === 'time' ? 'Avg Time (min)' : 'Avg PPH');
+        } else {
+            updateYearListInBox(totalBox, Array(12).fill(0), cat === 'pages' ? 'pages' : cat === 'time' ? 'min' : '');
+            updateYearListInBox(avgBox, Array(12).fill(0), cat === 'pages' ? 'pages' : cat === 'time' ? 'min' : '');
+        }
+    });
+    const statsYear = document.getElementById('statsYear');
+    if (statsYear) statsYear.textContent = currentYear;
+}
+
+function updateCharts(canvasId, data, label) {
+    const ctx = document.getElementById(canvasId)?.getContext('2d');
+    if (!ctx) return;
+
+    if (window[`chart${canvasId}`]) window[`chart${canvasId}`].destroy();
+
+    window[`chart${canvasId}`] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [{
+                label: label,
+                data: data,
+                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, ticks: { color: '#fff' } },
+                x: { ticks: { color: '#fff' } }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+
+function updateYearListInBox(box, data, unit) {
+    const existingList = box.querySelector('.stat-list');
+    if (existingList) existingList.remove();
+    const listContainer = document.createElement('div');
+    listContainer.classList.add('stat-list');
+    listContainer.style.height = '150px'; /* Match chart height */
+    listContainer.style.overflowY = 'auto';
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    data.forEach((value, index) => {
+        if (value > 0) {
+            const listItem = document.createElement('div');
+            listItem.classList.add('year-list-item');
+            listItem.innerHTML = `<span>${months[index]}</span><span>${value} ${unit}</span>`;
+            listContainer.appendChild(listItem);
+        }
+    });
+    box.appendChild(listContainer);
+}
+
+// Slider Listeners
+document.querySelectorAll('#modeSlider .slider-option').forEach(option => {
+    option.addEventListener('click', () => {
+        currentMode = option.dataset.mode;
+        document.getElementById('modeIndicator').style.left = currentMode === 'year' ? '0' : '50%';
+        document.getElementById('monthSelect').style.display = currentMode === 'month' ? 'inline-block' : 'none';
+        calculateStats();
+    });
+});
+
+document.querySelectorAll('#viewSlider .slider-option').forEach(option => {
+    option.addEventListener('click', () => {
+        currentStatsView = option.dataset.view;
+        document.getElementById('viewIndicator').style.left = currentStatsView === 'graph' ? '0' : '50%';
+        calculateStats();
+    });
+});
+
+document.getElementById('monthSelect').addEventListener('change', (e) => {
+    selectedMonth = parseInt(e.target.value, 10);
+    calculateStats();
+});
+
+// Ensure stats update on key events
+function updateAppState() {
+    localStorage.setItem('books', JSON.stringify(allBooks));
+    updateDashboard();
+    displayBooks();
+    attachStartReadingListeners();
+    attachFinishButtonListeners();
+    calculateStats();
+}
+
+function handleISBNSearchResult(bookInfo) {
+    // First, auto–populate the manual entry fields
+    populateToBeReadFields(bookInfo);
+    // Then, open the card for further options:
+    renderBookDetailsCard(bookInfo);
+}  
+
+document.getElementById('statsBtn').addEventListener('click', () => {
+    document.getElementById('toBeReadSection').style.display = 'none';
+    document.getElementById('currentlyReadingSection').style.display = 'none';
+    document.getElementById('finishedBooksSection').style.display = 'none';
+    document.getElementById('statsSection').style.display = 'block';
+    document.querySelector('.container').style.display = 'none';
+    populateMonthSelect();
+    calculateStats();
+});
+
+document.getElementById('yearSelect').addEventListener('change', (e) => {
+    currentYear = parseInt(e.target.value, 10);
+    updateAppState();
+    loadGoal();
+    calculateStats();
+});
+
+// Update filter button listeners (remove if redundant)
+document.querySelectorAll('.stats-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.stats-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const filter = btn.dataset.filter;
+        calculateStats(filter);
+    });
+});
+
+const modeSlider = document.getElementById('modeSlider');
+const modeIndicator = document.getElementById('modeIndicator');
+modeSlider.addEventListener('click', () => {
+  // Toggle currentMode between 'year' and 'month'
+  currentMode = currentMode === 'year' ? 'month' : 'year';
+  modeIndicator.style.left = currentMode === 'year' ? '0%' : '50%';
+  // Show month select only if in month mode
+  document.getElementById('monthSelect').style.display = currentMode === 'month' ? 'inline-block' : 'none';
+  calculateStats();
+});
+
+const viewSlider = document.getElementById('viewSlider');
+const viewIndicator = document.getElementById('viewIndicator');
+viewSlider.addEventListener('click', () => {
+  // Toggle currentStatsView between 'graph' and 'list'
+  currentStatsView = currentStatsView === 'graph' ? 'list' : 'graph';
+  viewIndicator.style.left = currentStatsView === 'graph' ? '0%' : '50%';
+  calculateStats();
+});
+
+// Fetch recommended books from Google Books API based on the given book.
+async function fetchRecommendedBooks(book) {
+    // Construct a query that combines the title and author.
+    const query = `${book.title} ${book.author}`;
+    const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=5`;
+    try {
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+      return data.items || [];
+    } catch (error) {
+      console.error("Error fetching recommended books:", error);
+      return [];
+    }
+  }
+  
+  // Display recommendations in a modal.
+  function showRecommendations(book) {
+    fetchRecommendedBooks(book).then(recommendedBooks => {
+      // Create the recommendations modal if it doesn't exist.
+      let recModal = document.getElementById("recommendationsModal");
+      if (!recModal) {
+        recModal = document.createElement("div");
+        recModal.id = "recommendationsModal";
+        recModal.classList.add("modal");
+        recModal.innerHTML = `
+          <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <h2>Recommended Books</h2>
+            <div id="recommendationsContainer" class="rec-grid"></div>
+          </div>
+        `;
+        document.body.appendChild(recModal);
+        recModal.querySelector(".close-modal").addEventListener("click", () => {
+          recModal.style.display = "none";
+          recModal.classList.remove("active");
+        });
+      }
+      // Populate recommendations.
+      const recContainer = recModal.querySelector("#recommendationsContainer");
+      recContainer.innerHTML = "";
+      recommendedBooks.forEach(recBook => {
+        const recInfo = recBook.volumeInfo;
+        // (Optionally, add filtering logic here to skip books that seem to be in the same series.)
+        const recCard = document.createElement("div");
+        recCard.classList.add("rec-card");
+        recCard.innerHTML = `
+          <img src="${recInfo.imageLinks?.thumbnail || './images/placeholder.jpeg'}" alt="${recInfo.title} Cover" />
+          <h3>${recInfo.title || "No Title"}</h3>
+          <p>${recInfo.authors ? recInfo.authors.join(", ") : "Unknown Author"}</p>
+          <p class="rec-description">${recInfo.description ? recInfo.description.slice(0,150) + '...' : "No description available."}</p>
+          <button class="add-to-tbr-btn">Add to TBR</button>
+        `;
+        recCard.querySelector(".add-to-tbr-btn").addEventListener("click", () => {
+          // Create a new book object for TBR.
+          const newBook = {
+            id: Date.now().toString(),
+            title: recInfo.title || "No Title",
+            author: recInfo.authors ? recInfo.authors.join(", ") : "Unknown Author",
+            year: recInfo.publishedDate ? parseInt(recInfo.publishedDate.split("-")[0], 10) : 0,
+            pages: recInfo.pageCount ? parseInt(recInfo.pageCount, 10) : 0,
+            cover: recInfo.imageLinks?.thumbnail || './images/placeholder.jpeg',
+            startDate: null,
+            tbr: true,
+            finished: false,
+            endDate: null,
+            pagesPerHour: null,
+            timeToRead: null,
+            backgroundMode: 'cover',
+            backgroundPosition: 'center',
+            currentPage: undefined
+          };
+          allBooks.push(newBook);
+          updateAppState();
+          alert("Book added to To Be Read!");
+        });
+        recContainer.appendChild(recCard);
+      });
+      recModal.style.display = "flex";
+      recModal.classList.add("active");
+    });
+  }
+  
+  // In your openBookDetailsModal(book) function, add a "See Recommendations" button:
+  function addRecommendationsButton(book) {
+    const recButton = document.createElement('button');
+    recButton.innerText = 'See Recommendations';
+    recButton.addEventListener('click', () => {
+      showRecommendations(book);
+    });
+    const modalButtonsContainer = document.querySelector('.modal-buttons');
+    if (modalButtonsContainer) {
+      modalButtonsContainer.appendChild(recButton);
+    }
+}
+  
+});

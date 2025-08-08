@@ -8,6 +8,8 @@
 </head>
 <body>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/node-vibrant/3.1.6/vibrant.min.js"></script>
 
     <!-- Centered header with buttons -->
@@ -35,19 +37,20 @@
             <button id="toBeReadBtn">To Be Read</button>
             <button id="currentlyReadingBtn" class="active">Currently Reading</button>
             <button id="finishedBooksBtn">Finished Books</button>
+            <button id="statsBtn">Stats</button>
         </div>
 
         <!-- "Add New Book" below the toggle buttons -->
         <div class="button-container">         
             <button id="openAddBookModal" class="add-book-link">Add Book</button>
-            <button id="toggleView">Toggle View</button>
         </div>
         </div>
     </div>
 
     <!-- Book List Section -->
     <div class="container">
-        <div class="desktop-only"><button id="sortToggle" class="sort-toggle">Sort Books</button></div>
+        <div class="desktop-only"><button id="sortToggle" class="sort-toggle">Sort Books</button>
+            <button id="toggleView">Toggle View</button></div>
         <div id="toBeReadSection" class="book-section">
             <h2>To Be Read</h2>
         </div>
@@ -59,11 +62,119 @@
         </div>
     </div>
 
-    <div id="bookSections">
-        <div id="toBeReadSection"></div>
-        <div id="currentlyReadingSection"></div>
-        <div id="finishedBooksSection"></div>
-    </div>    
+    <div id="statsSection" class="stats-section" style="display: none;">
+        <h2>Reading Stats for <span id="statsYear"></span></h2>
+        <div class="stats-controls">
+            <div class="slider-container" id="modeSlider">
+                <span class="slider-label" data-mode="year">Year</span>
+                <span class="slider-label" data-mode="month">Month</span>
+                <div class="slider-indicator" id="modeIndicator"></div>
+              </div>
+              
+              <div class="slider-container" id="viewSlider">
+                <span class="slider-label" data-view="graph">Graph</span>
+                <span class="slider-label" data-view="list">List</span>
+                <div class="slider-indicator" id="viewIndicator"></div>
+              </div>              
+            <select id="monthSelect" class="month-select" style="display: none;"></select>
+        </div>
+        <!-- Pages Read -->
+        <div class="stat-category" id="stat-pages">
+            <div class="stat-header">
+                <h3>Pages Read</h3>
+            </div>
+            <div class="stat-boxes">
+                <div class="stat-box" id="stat-pages-total">
+                    <h3 class="month-label"></h3>
+                    <p class="stat-value">0</p>
+                    <small>Total</small>
+                    <canvas class="stat-chart" id="chart-pages-total"></canvas>
+                  </div>                  
+                  <div class="stat-box" id="stat-pages-average">
+                    <h3 class="month-label"></h3>
+                    <p class="stat-value">0</p>
+                    <small>Average</small>
+                    <canvas class="stat-chart" id="chart-pages-average"></canvas>
+                  </div>
+                <div class="stat-box" id="stat-pages-least-most">
+                    <div class="least-most-container">
+                        <div class="least-most-item" data-tooltip="N/A">
+                            <small>Least</small>
+                            <img class="least-cover" src="./images/placeholder.jpeg" alt="Least Pages">
+                            <span class="stat-value">0</span>
+                        </div>
+                        <div class="least-most-item" data-tooltip="N/A">
+                            <small>Most</small>
+                            <img class="most-cover" src="./images/placeholder.jpeg" alt="Most Pages">
+                            <span class="stat-value">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Reading Time -->
+        <div class="stat-category" id="stat-time">
+            <div class="stat-header">
+                <h3>Reading Time</h3>
+            </div>
+            <div class="stat-boxes">
+                <div class="stat-box" id="stat-time-total">
+                    <h3 class="month-label"></h3>
+                    <p class="stat-value">0 min</p>
+                    <small>Total</small>
+                    <canvas class="stat-chart" id="chart-time-total"></canvas>
+                  </div>
+                  <div class="stat-box" id="stat-time-average">
+                    <h3 class="month-label"></h3>
+                    <p class="stat-value">0 min</p>
+                    <small>Average</small>
+                    <canvas class="stat-chart" id="chart-time-average"></canvas>
+                  </div>
+                <div class="stat-box" id="stat-time-least-most">
+                    <div class="least-most-container">
+                        <div class="least-most-item" data-tooltip="N/A">
+                            <small>Least</small>
+                            <img class="least-cover" src="./images/placeholder.jpeg" alt="Least Time">
+                            <span class="stat-value">0</span>
+                        </div>
+                        <div class="least-most-item" data-tooltip="N/A">
+                            <small>Most</small>
+                            <img class="most-cover" src="./images/placeholder.jpeg" alt="Most Time">
+                            <span class="stat-value">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Pages Per Hour -->
+        <div class="stat-category" id="stat-pph">
+            <div class="stat-header">
+                <h3>Pages per Hour</h3>
+            </div>
+            <div class="stat-boxes">
+                <div class="stat-box" id="stat-pph-average">
+                    <h3 class="month-label"></h3>
+                    <p class="stat-value">0</p>
+                    <small>Average</small>
+                    <canvas class="stat-chart" id="chart-pph-average"></canvas>
+                  </div>
+                <div class="stat-box" id="stat-pph-least-most">
+                    <div class="least-most-container">
+                        <div class="least-most-item" data-tooltip="N/A">
+                            <small>Least</small>
+                            <img class="least-cover" src="./images/placeholder.jpeg" alt="Least PPH">
+                            <span class="stat-value">0</span>
+                        </div>
+                        <div class="least-most-item" data-tooltip="N/A">
+                            <small>Most</small>
+                            <img class="most-cover" src="./images/placeholder.jpeg" alt="Most PPH">
+                            <span class="stat-value">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>                 
 
 <link href="https://cdn.jsdelivr.net/npm/cropperjs/dist/cropper.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/cropperjs"></script>
@@ -137,6 +248,8 @@
                     <input type="text" id="addBookCover" placeholder="Cover URL">
                     <img id="coverPreview" src="./images/placeholder.jpeg" alt="Cover Preview" style="width: 100px; height: auto; border-radius: 5px; margin-top: 10px;" />
                     <button id="searchCoverButton" type="button">Search for Cover</button>
+                    <button id="selectCoverFileButton" type="button">Select from Device</button>
+                    <input type="file" id="coverFileInput" accept="image/*" style="display: none;">
                 </div>
                 <!-- Include the hidden cover search modal as you already have it -->
                 <!-- Fields for Currently Reading and Finished Books -->
@@ -187,8 +300,10 @@
         <h2 id="finishReadingModalTitle">Finish Reading</h2>
         <form>
             <!-- New start date field -->
-            <label for="finishStartDate">Start Date:</label>
-            <input type="date" id="finishStartDate" required>
+            <div class="finish-start-container">
+                <label for="finishStartDate">Start Date:</label>
+                <input type="date" id="finishStartDate" required>
+            </div>              
             <label for="finishReadingDate">End Date:</label>
             <input type="date" id="finishReadingDate" required>
             <label for="pagesPerHour">Pages Per Hour:</label>
@@ -300,7 +415,8 @@
         <button class="section-option" data-section="toBeReadSection">To Be Read</button>
         <button class="section-option" data-section="currentlyReadingSection">Currently Reading</button>
         <button class="section-option" data-section="finishedBooksSection">Finished Books</button>
-      </div>
+        <button class="section-option" data-section="statsSection">Stats</button>
+    </div>
     </div>
 </div>      
 
